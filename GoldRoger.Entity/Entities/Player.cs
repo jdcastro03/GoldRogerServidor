@@ -10,7 +10,7 @@ namespace GoldRoger.Entity.Entities
     public class Player
     {
         public int PlayerId { get; set; } // Identificador del jugador (debe coincidir con el UserId en Usuarios)
-        public int TeamId { get; set; } // Identificador del equipo (debe existir en Equipos)
+        public int? TeamId { get; set; } // Identificador del equipo (debe existir en Equipos)
         public string Position { get; set; } // Posición en el equipo
 
         // Navegación

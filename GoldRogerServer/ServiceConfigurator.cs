@@ -1,5 +1,6 @@
 ﻿using GoldRoger.Data;
 using GoldRogerServer.Business;
+using GoldRogerServer.Business.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
@@ -28,7 +29,11 @@ namespace GoldRogerServer
 
             builder.Services.AddScoped<UserBusiness>();
             builder.Services.AddScoped<SessionBusiness>();
-
+            builder.Services.AddScoped<PlayerBusiness>();
+            builder.Services.AddScoped<RefereeBusiness>();
+            builder.Services.AddScoped<OrganizerBusiness>();    
+            builder.Services.AddScoped<CoachBusiness>();
+            builder.Services.AddScoped<SecurityBusiness>();
 
 
         }

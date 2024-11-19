@@ -42,6 +42,7 @@ namespace GoldRoger.Data
         public GenericRepository<User>? userRepository;
         public GenericRepository<Permission>? permissionRepository;
         public GenericRepository<UserPermission>? userPermissionRepository;
+        public GenericRepository<LeagueStanding>? leagueStandingRepository;
 
 
 

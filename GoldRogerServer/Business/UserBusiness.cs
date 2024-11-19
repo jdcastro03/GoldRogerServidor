@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using BCrypt.Net;
 using GoldRoger.Entity.Entities.GoldRoger.Entity.Entities;
 using GoldRogerServer.Business.Core;
+using Microsoft.SqlServer.Server;
+using GoldRoger.Entity.Entities.Security;
 
 namespace GoldRogerServer.Business
 {
@@ -23,6 +25,9 @@ namespace GoldRogerServer.Business
         {
             return await uow.UserRepository.Get().ToListAsync();
         }
+
+        //get user by id
+
 
         // Método para crear un nuevo usuario
         public async Task<User> CreateUser(CreateUserRequestDTO requestDTO)
@@ -43,80 +48,137 @@ namespace GoldRogerServer.Business
             if (requestDTO.LastName.Trim().Length <= 3)
                 throw new ArgumentException("Apellido inválido");
 
-            // Crear nuevo usuario
+            // Crear el usuario básico
             var newUser = new User
             {
                 Username = requestDTO.Username,
-                PasswordHash = HashPassword(requestDTO.PasswordHash), // Hashea la contraseña
+                PasswordHash = HashPassword(requestDTO.PasswordHash),
                 Email = requestDTO.Email,
                 FirstName = requestDTO.FirstName,
                 LastName = requestDTO.LastName,
                 UserType = requestDTO.UserType
             };
 
+            // Insertar el usuario en la base de datos
             uow.UserRepository.Insert(newUser);
             await uow.SaveAsync();
 
-            // Lógica específica por tipo de usuario
+            // Crear entidad específica basada en UserType
             switch (requestDTO.UserType)
             {
                 case 1: // Jugador
                     if (string.IsNullOrWhiteSpace(requestDTO.Position))
-                        throw new ArgumentException("La posición es obligatoria para un jugador");
-
-                    var newPlayer = new Player
-                    {
-                        PlayerId = newUser.UserId,
-                        Position = requestDTO.Position,
-                        TeamId = requestDTO.TeamId ?? 0
-                    };
-                    uow.PlayerRepository.Insert(newPlayer);
+                        throw new ArgumentException("La posición es requerida para jugadores.");
+                    await CreatePlayer(newUser.UserId, requestDTO.Position);
                     break;
 
-                case 2: // Entrenador
+                case 2: // Árbitro
                     if (string.IsNullOrWhiteSpace(requestDTO.LicenseNumber))
-                        throw new ArgumentException("El número de licencia es obligatorio para un entrenador");
-
-                    var newCoach = new Coach
-                    {
-                        CoachId = newUser.UserId,
-                        LicenseNumber = requestDTO.LicenseNumber
-                    };
-                    uow.CoachRepository.Insert(newCoach);
+                        throw new ArgumentException("El campo 'LicenseNumber' es obligatorio para árbitros.");
+                    await CreateReferee(newUser.UserId, requestDTO.LicenseNumber);
                     break;
 
                 case 3: // Organizador
                     if (string.IsNullOrWhiteSpace(requestDTO.OrganizationName))
-                        throw new ArgumentException("El nombre de la organización es obligatorio para un organizador");
-
-                    var newOrganizer = new Organizer
-                    {
-                        OrganizerId = newUser.UserId,
-                        OrganizationName = requestDTO.OrganizationName
-                    };
-                    uow.OrganizerRepository.Insert(newOrganizer);
+                        throw new ArgumentException("El campo 'OrganizationName' es obligatorio para organizadores.");
+                    await CreateOrganizer(newUser.UserId, requestDTO.OrganizationName);
                     break;
 
-                case 4: // Árbitro
+                case 4: // Entrenador
                     if (string.IsNullOrWhiteSpace(requestDTO.LicenseNumber))
-                        throw new ArgumentException("El número de licencia es obligatorio para un árbitro");
-
-                    var newReferee = new Referee
-                    {
-                        RefereeId = newUser.UserId,
-                        LicenseNumber = requestDTO.LicenseNumber
-                    };
-                    uow.RefereeRepository.Insert(newReferee);
+                        throw new ArgumentException("El campo 'LicenseNumber' es obligatorio para entrenadores.");
+                    await CreateCoach(newUser.UserId, requestDTO.LicenseNumber);
                     break;
 
                 default:
-                    throw new ArgumentException("Tipo de usuario no válido");
+                    throw new ArgumentException("Tipo de usuario no válido.");
             }
 
-            // Guarda todos los cambios
-            await uow.SaveAsync();
-
             return newUser;
+        }
+
+        // Métodos específicos para crear entidades
+
+        private async Task CreatePlayer(int userId, string position)
+        {
+            // Crear el jugador
+            var player = new Player
+            {
+                PlayerId = userId,
+                Position = position
+            };
+
+            // Insertar el jugador en la base de datos
+            uow.PlayerRepository.Insert(player);
+
+            // Insertar el permiso en la tabla UserPermission
+            var userPermission = new UserPermission
+            {
+                UserId = userId,
+                PermissionId = 1003  // ID del permiso de jugador
+            };
+            uow.UserPermissionRepository.Insert(userPermission);
+
+            // Guardar todos los cambios en la base de datos
+            await uow.SaveAsync();
+        }
+
+        private async Task CreateReferee(int userId, string licenseNumber)
+        {
+            var referee = new Referee
+            {
+                RefereeId = userId,
+                LicenseNumber = licenseNumber
+            };
+
+            uow.RefereeRepository.Insert(referee);
+
+            var userPermission = new UserPermission
+            {
+                UserId = userId,
+                PermissionId = 1005
+            };
+            uow.UserPermissionRepository.Insert(userPermission);
+
+            await uow.SaveAsync();
+        }
+
+        private async Task CreateOrganizer(int userId, string organizationName)
+        {
+            var organizer = new Organizer
+            {
+                OrganizerId = userId,
+                OrganizationName = organizationName
+            };
+
+            uow.OrganizerRepository.Insert(organizer);
+
+            var userPermission = new UserPermission
+            {
+                UserId = userId,
+                PermissionId = 1002
+            };
+            uow.UserPermissionRepository.Insert(userPermission);
+            await uow.SaveAsync();
+        }
+
+        private async Task CreateCoach(int userId, string licenseNumber)
+        {
+            var coach = new Coach
+            {
+                CoachId = userId,
+                LicenseNumber = licenseNumber
+            };
+
+            uow.CoachRepository.Insert(coach);
+
+            var userPermission = new UserPermission
+            {
+                UserId = userId,
+                PermissionId = 1004
+            };
+            uow.UserPermissionRepository.Insert(userPermission);
+            await uow.SaveAsync();
         }
 
         // Método para eliminar un usuario por ID
@@ -131,51 +193,236 @@ namespace GoldRogerServer.Business
 
             return true;
         }
-        public async Task<User?> Get(string email, string password)
+        public async Task<User> UpdateUser(int userId, UpdateUserRequestDTO requestDTO)
         {
-            return await uow.UserRepository
-                .Get(u => u.Email == email && u.PasswordHash == password)
-                .FirstOrDefaultAsync();
+            // Obtener el usuario existente
+            var existingUser = await uow.UserRepository.Get().FirstOrDefaultAsync(u => u.UserId == userId);
+
+            if (existingUser == null)
+            {
+                throw new ArgumentException("Usuario no encontrado.");
+            }
+
+            // Validar y actualizar campos generales del usuario
+            if (!string.IsNullOrWhiteSpace(requestDTO.Username))
+            {
+                existingUser.Username = requestDTO.Username;
+            }
+
+            if (!string.IsNullOrWhiteSpace(requestDTO.Email))
+            {
+                existingUser.Email = requestDTO.Email;
+            }
+
+            if (!string.IsNullOrWhiteSpace(requestDTO.FirstName))
+            {
+                existingUser.FirstName = requestDTO.FirstName;
+            }
+
+            if (!string.IsNullOrWhiteSpace(requestDTO.LastName))
+            {
+                existingUser.LastName = requestDTO.LastName;
+            }
+
+            // Actualizar datos específicos según el tipo de usuario
+            switch (existingUser.UserType)
+            {
+                case 1: // Jugador
+                    await UpdatePlayerData(userId, requestDTO);
+                    break;
+
+                case 2: // Árbitro
+                    await UpdateRefereeData(userId, requestDTO);
+                    break;
+
+                case 3: // Organizador
+                    await UpdateOrganizerData(userId, requestDTO);
+                    break;
+
+                case 4: // Entrenador
+                    await UpdateCoachData(userId, requestDTO);
+                    break;
+
+                default:
+                    throw new ArgumentException("Tipo de usuario no válido.");
+            }
+
+            // Guardar cambios en la base de datos
+            uow.UserRepository.Update(existingUser);
+            await uow.SaveAsync();
+
+            return existingUser; // Retornar el usuario actualizado
+        }
+
+        // Métodos auxiliares para actualizar datos específicos
+        private async Task UpdatePlayerData(int userId, UpdateUserRequestDTO requestDTO)
+        {
+            if (!string.IsNullOrWhiteSpace(requestDTO.Position))
+            {
+                var player = await uow.PlayerRepository.Get().FirstOrDefaultAsync(p => p.PlayerId == userId);
+                if (player != null)
+                {
+                    player.Position = requestDTO.Position;
+                    // Asegúrate de que el objeto se marque como modificado
+                    uow.PlayerRepository.Update(player);
+                }
+            }
+        }
+
+        private async Task UpdateRefereeData(int userId, UpdateUserRequestDTO requestDTO)
+        {
+            if (!string.IsNullOrWhiteSpace(requestDTO.LicenseNumber))
+            {
+                var referee = await uow.RefereeRepository.Get().FirstOrDefaultAsync(r => r.RefereeId == userId);
+                if (referee != null)
+                {
+                    referee.LicenseNumber = requestDTO.LicenseNumber;
+                    // Asegúrate de que el objeto se marque como modificado
+                    uow.RefereeRepository.Update(referee);
+                }
+            }
+        }
+
+        private async Task UpdateOrganizerData(int userId, UpdateUserRequestDTO requestDTO)
+        {
+            if (!string.IsNullOrWhiteSpace(requestDTO.OrganizationName))
+            {
+                var organizer = await uow.OrganizerRepository.Get().FirstOrDefaultAsync(o => o.OrganizerId == userId);
+                if (organizer != null)
+                {
+                    organizer.OrganizationName = requestDTO.OrganizationName;
+                    // Asegúrate de que el objeto se marque como modificado
+                    uow.OrganizerRepository.Update(organizer);
+                }
+            }
+        }
+
+        private async Task UpdateCoachData(int userId, UpdateUserRequestDTO requestDTO)
+        {
+            if (!string.IsNullOrWhiteSpace(requestDTO.LicenseNumber))
+            {
+                var coach = await uow.CoachRepository.Get().FirstOrDefaultAsync(c => c.CoachId == userId);
+                if (coach != null)
+                {
+                    coach.LicenseNumber = requestDTO.LicenseNumber;
+                    // Asegúrate de que el objeto se marque como modificado
+                    uow.CoachRepository.Update(coach);
+                }
+            }
         }
 
         // Método para actualizar un usuario existente
-        public async Task<User> UpdateUser(int userId, UpdateUserRequestDTO requestDTO)
-        {
-            var userToUpdate = await uow.UserRepository.Get(u => u.UserId == userId).FirstOrDefaultAsync();
-            if (userToUpdate == null)
-                throw new ArgumentException("Usuario no encontrado");
+        //public async Task<User> UpdateUser(UpdateUserRequestDTO requestDTO)
+        //{
+        //    //obten todos los usuarios
+        //    var userToUpdate = await uow.UserRepository.Get(u => u.UserId == requestDTO.UserId).FirstOrDefaultAsync();
+        //    // Validaciones básicas
+        //    if (userToUpdate == null)
+        //        throw new ArgumentException("Usuario no encontrado");
 
-            // Validaciones básicas
-            if (string.IsNullOrWhiteSpace(requestDTO.Username) || requestDTO.Username.Trim().Length <= 3)
-                throw new ArgumentException("Nombre de usuario inválido");
 
-            if (!string.IsNullOrWhiteSpace(requestDTO.Email) && !IsValidEmail(requestDTO.Email))
-                throw new ArgumentException("Correo electrónico inválido");
+        //    //actualizame los datos del usuario
 
-            if (requestDTO.FirstName.Trim().Length <= 3)
-                throw new ArgumentException("Nombre inválido");
+        //    userToUpdate.Username = requestDTO.Username;
+        //    userToUpdate.Email = requestDTO.Email;
+        //    userToUpdate.FirstName = requestDTO.FirstName;
+        //    userToUpdate.LastName = requestDTO.LastName;
 
-            if (requestDTO.LastName.Trim().Length <= 3)
-                throw new ArgumentException("Apellido inválido");
+        //    //ahora actualiza el usuario
+        //    uow.UserRepository.Update(userToUpdate);
+        //    await uow.SaveAsync();
 
-            // Actualizar campos
-            userToUpdate.Username = requestDTO.Username;
-            if (!string.IsNullOrWhiteSpace(requestDTO.PasswordHash))
-            {
-                userToUpdate.PasswordHash = HashPassword(requestDTO.PasswordHash); // Hashea la nueva contraseña si fue cambiada
-            }
-            userToUpdate.Email = requestDTO.Email;
-            userToUpdate.FirstName = requestDTO.FirstName;
-            userToUpdate.LastName = requestDTO.LastName;
-            userToUpdate.UserType = requestDTO.UserType;
 
-            uow.UserRepository.Update(userToUpdate);
-            await uow.SaveAsync();
+        //    // Crear el usuario básico
 
-            return userToUpdate;
-        }
 
-        // Método privado para validar formato de correo electrónico
+
+        //    // Crear entidad específica basada en UserType
+        //    switch (userToUpdate.UserType)
+        //    {
+        //        case 1: // Jugador
+        //            await UpdatePlayerData(requestDTO.UserId, requestDTO);
+        //            break;
+
+        //        case 2: // Árbitro
+        //            await UpdateRefereeData(requestDTO.UserId, requestDTO);
+        //            break;
+
+        //        case 3: // Organizador
+        //            await UpdateOrganizerData(requestDTO.UserId, requestDTO);
+        //            break;
+
+        //        case 4: // Entrenador
+        //            await UpdateCoachData(requestDTO.UserId, requestDTO);
+        //            break;
+
+        //        default:
+        //            throw new ArgumentException("Tipo de usuario no válido.");
+        //    }
+
+        //    return userToUpdate;
+        //}
+
+        //// Métodos específicos para crear entidades
+
+        //// Métodos auxiliares para actualizar datos específicos
+        //private async Task UpdatePlayerData(int userId, UpdateUserRequestDTO requestDTO)
+        //{
+        //    var player = await uow.PlayerRepository.Get().FirstOrDefaultAsync(p => p.PlayerId == userId);
+        //    if (player != null)
+        //    {
+        //        if (!string.IsNullOrWhiteSpace(requestDTO.Position))
+        //        {
+        //            player.Position = requestDTO.Position;
+        //        }
+        //        // Puedes añadir más propiedades si es necesario
+        //        uow.PlayerRepository.Update(player);
+        //    }
+        //}
+
+        //private async Task UpdateRefereeData(int userId, UpdateUserRequestDTO requestDTO)
+        //{
+        //    var referee = await uow.RefereeRepository.Get().FirstOrDefaultAsync(r => r.RefereeId == userId);
+        //    if (referee != null)
+        //    {
+        //        if (!string.IsNullOrWhiteSpace(requestDTO.LicenseNumber))
+        //        {
+        //            referee.LicenseNumber = requestDTO.LicenseNumber;
+        //        }
+        //        // Puedes añadir más propiedades si es necesario
+        //        uow.RefereeRepository.Update(referee);
+        //    }
+        //}
+
+        //private async Task UpdateOrganizerData(int userId, UpdateUserRequestDTO requestDTO)
+        //{
+        //    var organizer = await uow.OrganizerRepository.Get().FirstOrDefaultAsync(o => o.OrganizerId == userId);
+        //    if (organizer != null)
+        //    {
+        //        if (!string.IsNullOrWhiteSpace(requestDTO.OrganizationName))
+        //        {
+        //            organizer.OrganizationName = requestDTO.OrganizationName;
+        //        }
+        //        // Puedes añadir más propiedades si es necesario
+        //        uow.OrganizerRepository.Update(organizer);
+        //    }
+        //}
+
+        //private async Task UpdateCoachData(int userId, UpdateUserRequestDTO requestDTO)
+        //{
+        //    var coach = await uow.CoachRepository.Get().FirstOrDefaultAsync(c => c.CoachId == userId);
+        //    if (coach != null)
+        //    {
+        //        if (!string.IsNullOrWhiteSpace(requestDTO.LicenseNumber))
+        //        {
+        //            coach.LicenseNumber = requestDTO.LicenseNumber;
+        //        }
+        //        // Puedes añadir más propiedades si es necesario
+        //        uow.CoachRepository.Update(coach);
+        //    }
+        //}
+
+
         private bool IsValidEmail(string email)
         {
             try

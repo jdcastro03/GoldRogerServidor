@@ -32,16 +32,50 @@ namespace GoldRogerServer.Controllers
 
             try
             {
-                // Verificación adicional basada en el tipo de usuario
-                if (requestDTO.UserType == 1) // Asumiendo que 1 es el tipo "Jugador"
+                // Verificación específica según el tipo de usuario
+                switch (requestDTO.UserType)
                 {
-                    // Valida que 'Position' esté presente y no sea vacío o nulo
-                    if (string.IsNullOrWhiteSpace(requestDTO.Position))
-                    {
+                    case 1: // Jugador
+                            // Solo 'Position' es obligatorio para los jugadores; otros campos pueden ser nulos
+                        if (string.IsNullOrWhiteSpace(requestDTO.Position))
+                        {
+                            response.Success = false;
+                            response.Message = "El campo 'Position' es obligatorio para usuarios del tipo 'Jugador'.";
+                            return BadRequest(response);
+                        }
+                        break;
+
+                    case 2: // Árbitro
+                        if (string.IsNullOrWhiteSpace(requestDTO.LicenseNumber))
+                        {
+                            response.Success = false;
+                            response.Message = "El campo 'LicenseNumber' es obligatorio para usuarios del tipo 'Árbitro'.";
+                            return BadRequest(response);
+                        }
+                        break;
+
+                    case 3: // Organizador
+                        if (string.IsNullOrWhiteSpace(requestDTO.OrganizationName))
+                        {
+                            response.Success = false;
+                            response.Message = "El campo 'OrganizationName' es obligatorio para usuarios del tipo 'Organizador'.";
+                            return BadRequest(response);
+                        }
+                        break;
+
+                    case 4: // Entrenador
+                        if (string.IsNullOrWhiteSpace(requestDTO.LicenseNumber))
+                        {
+                            response.Success = false;
+                            response.Message = "El campo 'LicenseNumber' es obligatorio para usuarios del tipo 'Entrenador'.";
+                            return BadRequest(response);
+                        }
+                        break;
+
+                    default:
                         response.Success = false;
-                        response.Message = "El campo 'Position' es obligatorio para usuarios del tipo 'Jugador'.";
+                        response.Message = "Tipo de usuario no válido.";
                         return BadRequest(response);
-                    }
                 }
 
                 // Llamada a la lógica de creación de usuario en UserBusiness
@@ -54,26 +88,40 @@ namespace GoldRogerServer.Controllers
                 response.Message = ex.Message;
                 return BadRequest(response);
             }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = "Ocurrió un error al crear el usuario.";
+                return StatusCode(500, response);
+            }
         }
 
         // Endpoint para actualizar un usuario usando un DTO
-        [KitAuthorize]
-        [PermissionChecker("USER_UPDATE")]
+
         [HttpPut("UpdateUser")]
-        public async Task<IActionResult> UpdateUser(int id, UpdateUserRequestDTO requestDTO)
+        public async Task<IActionResult> UpdateUser([FromBody] UpdateUserRequestDTO requestDTO)
         {
             var response = new APIResponse<User> { Success = true };
 
             try
             {
-                response.Data = await _userBusiness.UpdateUser(id, requestDTO);
+                // Llama al método de actualización en el servicio de negocio
+                response.Data = await _userBusiness.UpdateUser(requestDTO.UserId, requestDTO);
                 return Ok(response);
             }
             catch (ArgumentException ex)
             {
+                // Manejo de errores específicos de la lógica de negocio
                 response.Success = false;
                 response.Message = ex.Message;
                 return BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                // Manejo de errores generales
+                response.Success = false;
+                response.Message = "Error interno del servidor";
+                return StatusCode(500, response);
             }
         }
 

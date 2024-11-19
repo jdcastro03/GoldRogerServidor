@@ -34,6 +34,7 @@ namespace GoldRoger.Data
             new CoachMap().Configure(modelBuilder.Entity<Coach>());
             new PermissionMap().Configure(modelBuilder.Entity<Permission>());
             new UserPermissionMap().Configure(modelBuilder.Entity<UserPermission>());
+            new LeagueStandingMap().Configure(modelBuilder.Entity<LeagueStanding>());
             
 
         }
@@ -56,6 +57,8 @@ namespace GoldRoger.Data
 
         public DbSet<UserPermission> UserPermission { get; set; }
         public DbSet<Permission> Permission { get; set; }
+
+        public DbSet<LeagueStanding> LeagueStanding { get; set; }
 
 
 

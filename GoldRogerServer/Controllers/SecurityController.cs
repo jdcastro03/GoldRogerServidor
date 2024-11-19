@@ -72,8 +72,7 @@ namespace GoldRogerServer.Controllers
             return Ok(response);
         }
 
-        [KitAuthorize]
-        [PermissionChecker("PERMISSION_READ")]
+      
         [HttpPost("CheckPermission")]
         public async Task<IActionResult> CheckPermission([FromBody] CheckPermissionRequest checkPermissionRequest)
         {
