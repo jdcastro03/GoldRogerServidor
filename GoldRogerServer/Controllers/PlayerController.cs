@@ -15,7 +15,7 @@ namespace GoldRogerServer.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    
+
     public class PlayerController : ControllerBase
     {
         private readonly PlayerBusiness _playerBusiness;
@@ -98,6 +98,141 @@ namespace GoldRogerServer.Controllers
                 // Manejar errores generales
                 return StatusCode(500, new { Success = false, Message = ex.Message });
             }
+        }
+
+        //controller de getplayer teamid
+        [HttpGet("GetPlayerTeamId")]
+        [Authorize]
+        public async Task<IActionResult> GetPlayerTeamId()
+        {
+            var response = new APIResponse<int?> { Success = true };
+
+            try
+            {
+                // Obtener el UserId del usuario logueado (playerId)
+                int playerId = SessionHelper.GetTokenUserId(User);
+                if (playerId == 0)
+                    return Unauthorized("Usuario no autorizado");
+
+                // Llamar al servicio de negocio para obtener el equipo del jugador
+                response.Data = await _playerBusiness.GetPlayerTeamId(playerId);
+            }
+            catch (ArgumentException ex)
+            {
+                // Manejar errores como jugador no encontrado
+                response.Success = false;
+                response.Message = ex.Message;
+                return NotFound(response);
+            }
+            catch (Exception ex)
+            {
+                // Manejar errores generales
+                response.Success = false;
+                response.Message = ex.Message;
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
+
+        //controller de getplayer teamname
+        [HttpGet("GetPlayerTeamName")]
+        [Authorize]
+        public async Task<IActionResult> GetPlayerTeamName()
+        {
+            var response = new APIResponse<string?> { Success = true };
+
+            try
+            {
+                // Obtener el UserId del usuario logueado (playerId)
+                int playerId = SessionHelper.GetTokenUserId(User);
+                if (playerId == 0)
+                    return Unauthorized("Usuario no autorizado");
+
+                // Llamar al servicio de negocio para obtener el nombre del equipo del jugador
+                response.Data = await _playerBusiness.GetPlayerTeamName(playerId);
+            }
+            catch (ArgumentException ex)
+            {
+                // Manejar errores como jugador no encontrado
+                response.Success = false;
+                response.Message = ex.Message;
+                return NotFound(response);
+            }
+            catch (Exception ex)
+            {
+                // Manejar errores generales
+                response.Success = false;
+                response.Message = ex.Message;
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
+
+        //controller de getcoachname
+        [HttpGet("GetCoachName")]
+        [Authorize]
+        public async Task<IActionResult> GetTeamName() {
+            var response = new APIResponse<string?> { Success = true };
+
+            try
+            {
+                // Obtener el UserId del usuario logueado (playerId)
+                int playerId = SessionHelper.GetTokenUserId(User);
+                if (playerId == 0)
+                    return Unauthorized("Usuario no autorizado");
+
+                // Llamar al servicio de negocio para obtener el nombre del entrenador del jugador
+                response.Data = await _playerBusiness.GetCoachName(playerId);
+            }
+            catch (ArgumentException ex)
+            {
+                // Manejar errores como jugador no encontrado
+                response.Success = false;
+                response.Message = ex.Message;
+                return NotFound(response);
+            }
+            catch (Exception ex)
+            {
+                // Manejar errores generales
+                response.Success = false;
+                response.Message = ex.Message;
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
+
+
+        //getplayersbyteamname
+        [HttpGet("GetPlayersByTeamName")]
+        [Authorize]
+        public async Task<IActionResult> GetPlayersByTeamName(string teamName)
+        {
+            var response = new APIResponse<List<PlayerDTO>> { Success = true };
+
+            try
+            {
+                // Llamar al servicio de negocio para obtener los jugadores del equipo
+                response.Data = await _playerBusiness.GetPlayersByTeamName(teamName);
+            }
+            catch (ArgumentException ex)
+            {
+                // Manejar errores como equipo no encontrado
+                response.Success = false;
+                response.Message = ex.Message;
+                return NotFound(response);
+            }
+            catch (Exception ex)
+            {
+                // Manejar errores generales
+                response.Success = false;
+                response.Message = ex.Message;
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
         }
     }
 }

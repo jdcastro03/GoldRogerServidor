@@ -88,9 +88,111 @@ namespace GoldRogerServer.Business
     await uow.SaveAsync();
 }
 
+        //metodo para obtener el campo de temaid de la tabla de player tomando en cuenta el playerid, del usuario logeado
+        public async Task<int?> GetPlayerTeamId(int playerId)
+        {
+            // Busca el jugador en la base de datos usando el PlayerId
+            var player = await uow.PlayerRepository.Get(p => p.PlayerId == playerId).FirstOrDefaultAsync();
 
+            // Si no se encuentra el jugador, lanza una excepción
+            if (player == null)
+                throw new ArgumentException("Jugador no encontrado");
 
+            // Devuelve el TeamId del jugador, que puede ser null
+            return player.TeamId;
+        }
 
+        //metodo para obtener el teamname del basandose en el teamid que tenga el playerid logeado
+        public async Task<string?> GetPlayerTeamName(int playerId)
+        {
+            // Busca el jugador en la base de datos usando el PlayerId
+            var player = await uow.PlayerRepository.Get(p => p.PlayerId == playerId).FirstOrDefaultAsync();
 
+            // Si no se encuentra el jugador, lanza una excepción
+            if (player == null)
+                throw new ArgumentException("Jugador no encontrado");
+
+            // Si el jugador no tiene un equipo asignado, devuelve null
+            if (player.TeamId == null)
+                return null;
+
+            // Busca el equipo en la base de datos usando el TeamId del jugador
+            var team = await uow.TeamRepository.Get(t => t.TeamId == player.TeamId).FirstOrDefaultAsync();
+
+            // Si no se encuentra el equipo, lanza una excepción
+            if (team == null)
+                throw new ArgumentException("Equipo no encontrado");
+
+            // Devuelve el nombre del equipo
+            return team.TeamName;
+        }
+
+        //metodo para obtener el firstname y lastname de la tabla users tomando el coachid que coincida con el teamname del playerid logeado
+        public async Task<string?> GetCoachName(int playerId)
+        {
+            // Busca el jugador en la base de datos usando el PlayerId
+            var player = await uow.PlayerRepository.Get(p => p.PlayerId == playerId).FirstOrDefaultAsync();
+
+            // Si no se encuentra el jugador, lanza una excepción
+            if (player == null)
+                throw new ArgumentException("Jugador no encontrado");
+
+            // Si el jugador no tiene un equipo asignado, devuelve null
+            if (player.TeamId == null)
+                return null;
+
+            // Busca el equipo en la base de datos usando el TeamId del jugador
+            var team = await uow.TeamRepository.Get(t => t.TeamId == player.TeamId).FirstOrDefaultAsync();
+
+            // Si no se encuentra el equipo, lanza una excepción
+            if (team == null)
+                throw new ArgumentException("Equipo no encontrado");
+
+            // Busca el coach en la base de datos usando el CoachId del equipo
+            var coach = await uow.CoachRepository.Get(c => c.CoachId == team.CoachId).FirstOrDefaultAsync();
+
+            // Si no se encuentra el coach, lanza una excepción
+            if (coach == null)
+                throw new ArgumentException("Entrenador no encontrado");
+
+            // Busca el usuario en la base de datos usando el coachid pero en la tabla users
+            var user = await uow.UserRepository.Get(u => u.UserId == coach.CoachId).FirstOrDefaultAsync();
+
+            // Si no se encuentra el usuario, lanza una excepción
+            if (user == null)
+                throw new ArgumentException("Usuario no encontrado");
+
+            // Devuelve el nombre completo del coach
+            return $"{user.FirstName} {user.LastName}";
+        }
+
+        //metodo donde se recibira el teamname como parametro, y se tomara el teamid de ese teamname en la tabla teams, despues me traeras a todos los players que tengan ese teamid
+        public async Task<List<PlayerDTO>> GetPlayersByTeamName(string teamName)
+        {
+            // Busca el equipo en la base de datos usando el TeamName
+            var team = await uow.TeamRepository.Get(t => t.TeamName == teamName).FirstOrDefaultAsync();
+
+            // Si no se encuentra el equipo, lanza una excepción
+            if (team == null)
+                throw new ArgumentException("Equipo no encontrado");
+
+            // Busca los jugadores en la base de datos usando el TeamId del equipo
+            var players = await uow.PlayerRepository.Get(p => p.TeamId == team.TeamId)
+                .Select(p => new PlayerDTO
+                {
+                    PlayerId = p.PlayerId,
+                    FirstName = p.User.FirstName,
+                    LastName = p.User.LastName,
+                    Position = p.Position
+                })
+                .ToListAsync();
+
+            // Si no se encuentran jugadores, lanza una excepción
+            if (players == null || !players.Any())
+                throw new ArgumentException("No se encontraron jugadores en el equipo");
+
+            // Devuelve la lista de jugadores
+            return players;
+        }
     }
 }
