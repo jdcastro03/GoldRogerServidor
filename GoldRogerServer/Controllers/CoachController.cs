@@ -160,6 +160,59 @@ namespace GoldRogerServer.Controllers
 
             return Ok(response); // Si todo sale bien, devolver los torneos con código 200
         }
+        [HttpPut("UpdateTournamentForTeam/{tournamentId}")]
+        [Authorize]
+        public async Task<IActionResult> UpdateTournamentForTeam(int tournamentId)
+        {
+            try
+            {
+                // Obtener el UserId del usuario logueado (coachId)
+                int coachId = SessionHelper.GetTokenUserId(User);
+                if (coachId == 0)
+                    return Unauthorized(new { Success = false, Message = "Usuario no autorizado" });
+
+                // Llamar al servicio de negocio para actualizar el torneo del equipo
+                await _coachBusiness.UpdateTournamentIdByCoachId(coachId, tournamentId);
+
+                return Ok(new { Success = true, Message = "Torneo actualizado con éxito para el equipo." });
+            }
+            catch (ArgumentException ex)
+            {
+                // Manejar errores como entrenador o equipo no encontrados
+                return NotFound(new { Success = false, Message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                // Manejar errores generales
+                return StatusCode(500, new { Success = false, Message = "Ocurrió un error inesperado: " + ex.Message });
+            }
+        }
+
+        //getteamtournamentidbycoachid
+        [HttpGet("GetTeamTournamentIdByCoachId")]
+        [Authorize]
+
+        
+        public async Task<IActionResult> GetTeamTournamentIdByCoachId()
+        {
+            try
+            {
+                // Obtener el CoachId del usuario logueado
+                int coachId = SessionHelper.GetTokenUserId(User);
+                if (coachId == 0)
+                    return Unauthorized("Usuario no autorizado");
+
+                // Obtener el TournamentId del equipo asociado al CoachId
+                var teamTournamentId = await _coachBusiness.GetTeamTournamentIdByCoachId(coachId);
+
+                return Ok(new { Success = true, Data = teamTournamentId });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Success = false, Message = ex.Message });
+            }
+        }
+
 
     }
 }

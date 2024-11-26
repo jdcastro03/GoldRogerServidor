@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using GoldRoger.Entity.Entities;
 using GoldRogerServer.DTOs.Coach;
 using GoldRogerServer.DTOs.Tournament;
+using System.Formats.Asn1;
 
 namespace GoldRogerServer.Business
 {
@@ -151,8 +152,54 @@ namespace GoldRogerServer.Business
             return tournaments;
         }
 
+        //metodo para actualizar el tournamentid del equipo tomando en cuenta el coachid, del user logeado y de parametro al tournament id al que se unira
+        public async Task UpdateTournamentIdByCoachId(int coachId, int newTournamentId)
+        {
+            // Validar entrada
+            if (newTournamentId <= 0)
+                throw new ArgumentException("El ID del torneo es inválido.");
+
+            // Verificar si el entrenador existe
+            var coachExists = await uow.CoachRepository.Get(c => c.CoachId == coachId).AnyAsync();
+            if (!coachExists)
+                throw new ArgumentException("Entrenador no encontrado.");
+
+            // Verificar si el torneo existe
+            var tournamentExists = await uow.TournamentRepository.Get(t => t.TournamentId == newTournamentId).AnyAsync();
+            if (!tournamentExists)
+                throw new ArgumentException("Torneo no encontrado.");
+
+            // Obtener el único equipo asociado al CoachId
+            var team = await uow.TeamRepository.Get(t => t.CoachId == coachId).FirstOrDefaultAsync();
+
+            if (team == null)
+                throw new ArgumentException("No se encontró un equipo asociado al entrenador.");
+
+            // Actualizar el TournamentId del equipo encontrado
+            team.TournamentId = newTournamentId;
+            uow.TeamRepository.Update(team);
+
+            // Guardar los cambios en la base de datos
+            await uow.SaveAsync();
+        }
+        //metoo que edvuelve el valor de tournamentid del equipo que coincide con el coachid del usuario logeado
 
 
+        public async Task<int?> GetTeamTournamentIdByCoachId(int coachId)
+        {
+            // Verificar si el entrenador existe
+            var coachExists = await uow.CoachRepository.Get(c => c.CoachId == coachId).AnyAsync();
+            if (!coachExists)
+                throw new ArgumentException("Entrenador no encontrado.");
+
+            // Obtener el único equipo asociado al CoachId
+            var team = await uow.TeamRepository.Get(t => t.CoachId == coachId).FirstOrDefaultAsync();
+
+            if (team == null)
+                throw new ArgumentException("No se encontró un equipo asociado al entrenador.");
+
+            return team.TournamentId;
+        }
 
 
 
