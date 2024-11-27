@@ -20,9 +20,10 @@ namespace GoldRoger.Data.Maps
             builder.Property(ps => ps.YellowCards).HasDefaultValue(0);
             builder.Property(ps => ps.RedCards).HasDefaultValue(0);
 
+            // Configura la relación uno a uno sin necesidad de crear un campo PlayerStatsPlayerId
             builder.HasOne(ps => ps.Player)
-                   .WithOne()
-                   .HasForeignKey<PlayerStats>(ps => ps.PlayerId);
+                   .WithOne(p => p.PlayerStats) // Establece que Player tiene una propiedad de navegación a PlayerStats
+                   .HasForeignKey<PlayerStats>(ps => ps.PlayerId); // Usa PlayerId como clave foránea
         }
     }
 }

@@ -8,7 +8,7 @@ using GoldRoger.Entity.Entities;
 using GoldRogerServer.Business.Core;
 using GoldRogerServer.DTOs.Player;
 using Microsoft.EntityFrameworkCore;
-    
+
 
 
 
@@ -60,33 +60,33 @@ namespace GoldRogerServer.Business
 
 
         public async Task UpdatePlayerTeam(int playerId, int teamId)
-    {
-    // Busca el jugador en la base de datos usando el PlayerId
-    var player = await uow.PlayerRepository.Get(p => p.PlayerId == playerId).FirstOrDefaultAsync();
+        {
+            // Busca el jugador en la base de datos usando el PlayerId
+            var player = await uow.PlayerRepository.Get(p => p.PlayerId == playerId).FirstOrDefaultAsync();
 
-    // Si no se encuentra el jugador, lanza una excepción
-    if (player == null)
-    {
-        throw new ArgumentException("Jugador no encontrado");
-    }
+            // Si no se encuentra el jugador, lanza una excepción
+            if (player == null)
+            {
+                throw new ArgumentException("Jugador no encontrado");
+            }
 
-    // Verifica si el TeamId es válido (puedes agregar más validaciones si es necesario)
-    var team = await uow.TeamRepository.Get(t => t.TeamId == teamId).FirstOrDefaultAsync();
+            // Verifica si el TeamId es válido (puedes agregar más validaciones si es necesario)
+            var team = await uow.TeamRepository.Get(t => t.TeamId == teamId).FirstOrDefaultAsync();
 
-    // Si no se encuentra el equipo, lanza una excepción
-    if (team == null)
-    {
-        throw new ArgumentException("Equipo no encontrado");
-    }
+            // Si no se encuentra el equipo, lanza una excepción
+            if (team == null)
+            {
+                throw new ArgumentException("Equipo no encontrado");
+            }
 
-    // Actualiza el TeamId del jugador
-    player.TeamId = teamId;
+            // Actualiza el TeamId del jugador
+            player.TeamId = teamId;
 
-    // Guarda los cambios en la base de datos
-    uow.PlayerRepository.Update(player);
+            // Guarda los cambios en la base de datos
+            uow.PlayerRepository.Update(player);
 
-    await uow.SaveAsync();
-}
+            await uow.SaveAsync();
+        }
 
         //metodo para obtener el campo de temaid de la tabla de player tomando en cuenta el playerid, del usuario logeado
         public async Task<int?> GetPlayerTeamId(int playerId)
@@ -194,5 +194,42 @@ namespace GoldRogerServer.Business
             // Devuelve la lista de jugadores
             return players;
         }
+
+        //metodo para obtener los goles, tarjetas amarillas y rojas del jugador logeado con su playerid, ademas de obtener su firstname y lastname
+        public async Task<PlayerStatsDTO> GetPlayerStats(int playerId)
+        {
+            // Busca el jugador en la base de datos usando el PlayerId
+            var player = await uow.PlayerRepository.Get(p => p.PlayerId == playerId)
+                .Include(p => p.User) // Incluye la relación con User
+                .Include(p => p.PlayerStats) // Incluye la relación con PlayerStats
+                .FirstOrDefaultAsync();
+
+            // Si no se encuentra el jugador, lanza una excepción
+            if (player == null)
+                throw new ArgumentException("Jugador no encontrado");
+
+            // Si el jugador no tiene asociado un usuario, lanza una excepción
+            if (player.User == null)
+                throw new ArgumentException("Usuario no encontrado para el jugador");
+
+            // Si el jugador no tiene estadísticas, lanza una excepción
+            if (player.PlayerStats == null)
+                throw new ArgumentException("Estadísticas del jugador no encontradas");
+
+            // Crea un objeto PlayerStatsDTO con los datos del jugador
+            var playerStats = new PlayerStatsDTO
+            {
+                PlayerId = player.PlayerId,
+                FirstName = player.User.FirstName,
+                LastName = player.User.LastName,
+                Goals = player.PlayerStats.Goals,
+                YellowCards = player.PlayerStats.YellowCards,
+                RedCards = player.PlayerStats.RedCards
+            };
+
+            // Devuelve las estadísticas del jugador
+            return playerStats;
+        }
     }
+
 }

@@ -16,5 +16,7 @@ namespace GoldRoger.Entity.Entities
         // Navegación
         public virtual User User { get; set; } // Relación uno a uno con User
         public virtual Team Team { get; set; } // Relación muchos a uno con Team
+
+        public virtual PlayerStats PlayerStats { get; set; } // Relación uno a uno con PlayerStats
     }
 }

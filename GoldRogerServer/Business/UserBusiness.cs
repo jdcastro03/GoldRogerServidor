@@ -107,6 +107,19 @@ namespace GoldRogerServer.Business
                 PlayerId = userId,
                 Position = position
             };
+            // Crear las estadísticas del jugador
+            var playerStats = new PlayerStats
+            {
+                PlayerId = userId,
+                Goals = 0,
+                YellowCards = 0,
+                RedCards = 0
+            };
+
+            // Insertar las estadísticas del jugador en la base de datos
+            uow.PlayerStatsRepository.Insert(playerStats);
+
+
 
             // Insertar el jugador en la base de datos
             uow.PlayerRepository.Insert(player);

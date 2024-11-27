@@ -173,7 +173,8 @@ namespace GoldRogerServer.Controllers
         //controller de getcoachname
         [HttpGet("GetCoachName")]
         [Authorize]
-        public async Task<IActionResult> GetTeamName() {
+        public async Task<IActionResult> GetTeamName()
+        {
             var response = new APIResponse<string?> { Success = true };
 
             try
@@ -220,6 +221,41 @@ namespace GoldRogerServer.Controllers
             catch (ArgumentException ex)
             {
                 // Manejar errores como equipo no encontrado
+                response.Success = false;
+                response.Message = ex.Message;
+                return NotFound(response);
+            }
+            catch (Exception ex)
+            {
+                // Manejar errores generales
+                response.Success = false;
+                response.Message = ex.Message;
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
+
+        //getplayerstats 
+        [HttpGet("GetPlayerStats")]
+        [Authorize]
+        public async Task<IActionResult> GetPlayerStats()
+        {
+            var response = new APIResponse<PlayerStatsDTO> { Success = true };
+
+            try
+            {
+                // Obtener el UserId del usuario logueado (playerId)
+                int playerId = SessionHelper.GetTokenUserId(User);
+                if (playerId == 0)
+                    return Unauthorized("Usuario no autorizado");
+
+                // Llamar al servicio de negocio para obtener las estadísticas del jugador
+                response.Data = await _playerBusiness.GetPlayerStats(playerId);
+            }
+            catch (ArgumentException ex)
+            {
+                // Manejar errores como jugador no encontrado
                 response.Success = false;
                 response.Message = ex.Message;
                 return NotFound(response);
