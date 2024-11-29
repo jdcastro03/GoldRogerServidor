@@ -18,5 +18,6 @@ namespace GoldRoger.Entity.Entities
         public virtual Organizer Organizer { get; set; } // Relación muchos a uno con Organizer
         public virtual TournamentType TournamentType { get; set; } // Relación muchos a uno con TournamentType
         public virtual ICollection<Match> Matches { get; set; } // Relación uno a muchos con Matches
+        public ICollection<LeagueStanding> LeagueStandings { get; set; }
     }
 }

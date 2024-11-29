@@ -24,6 +24,11 @@ namespace GoldRoger.Data.Maps
                 .WithOne(c => c.Team)
                 .HasForeignKey<Team>(t => t.CoachId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasMany<LeagueStanding>()
+    .WithOne()
+    .HasForeignKey(ls => ls.TeamId)
+    .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

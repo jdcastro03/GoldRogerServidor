@@ -181,6 +181,25 @@ namespace GoldRogerServer.Business
 
             // Guardar los cambios en la base de datos
             await uow.SaveAsync();
+
+            //al momento de unirse se inserta en la tabla de leaguestandings el teamid y el tournamentid y los valores en 0 
+            //para los campos de wins, losses, ties, goalsfor, goalsagainst, goaldifference y points
+            var leagueStanding = new LeagueStanding
+            {
+                TeamId = team.TeamId,
+                TournamentId = newTournamentId,
+                Wins = 0,
+                Losses = 0,
+                Draws = 0,
+                GoalsFor = 0,
+                GoalsAgainst = 0,
+                GoalDifference = 0,
+                Points = 0,
+                MatchesPlayed = 0
+            };
+
+            uow.LeagueStandingRepository.Insert(leagueStanding);
+            await uow.SaveAsync();
         }
         //metoo que edvuelve el valor de tournamentid del equipo que coincide con el coachid del usuario logeado
 
@@ -201,6 +220,50 @@ namespace GoldRogerServer.Business
             return team.TournamentId;
         }
 
+
+       //metodo para obtener los datos de tournamentDTO del equipo del coachlogeado
+       public async Task<TournamentDTO> GetTeamTournamentInfoByCoachId(int coachId)
+        {
+            // Verificar si el entrenador existe
+            var coachExists = await uow.CoachRepository.Get(c => c.CoachId == coachId).AnyAsync();
+            if (!coachExists)
+                throw new ArgumentException("Entrenador no encontrado.");
+
+            // Obtener el único equipo asociado al CoachId
+            var team = await uow.TeamRepository.Get(t => t.CoachId == coachId).FirstOrDefaultAsync();
+
+            if (team == null)
+                throw new ArgumentException("No se encontró un equipo asociado al entrenador.");
+
+            // Obtener el torneo asociado al equipo
+            var tournament = await uow.TournamentRepository.Get(t => t.TournamentId == team.TournamentId).FirstOrDefaultAsync();
+
+            if (tournament == null)
+                throw new ArgumentException("No se encontró un torneo asociado al equipo.");
+
+            // Crear el DTO con los datos del torneo
+            // Busca el torneo en la base de datos usando el TournamentId del equipo
+            var tournamentDTO = await uow.TournamentRepository.Get(t => t.TournamentId == team.TournamentId)
+                .Include(t => t.Organizer) // Incluye la relación con Organizer
+                .ThenInclude(o => o.User) // Incluye la relación con User a través de Organizer
+                .Select(t => new TournamentDTO
+                {
+                    TournamentId = t.TournamentId,
+                    TournamentName = t.TournamentName,
+                    StartDate = t.StartDate,
+                    EndDate = t.EndDate,
+                    TournamentTypeId = t.TournamentTypeId,
+                    OrganizerUsername = t.Organizer.User.Username // Relación de navegación para obtener el username
+                })
+                .FirstOrDefaultAsync();
+
+            // Si no se encuentra el torneo, lanza una excepción
+            if (tournamentDTO == null)
+                throw new ArgumentException("Torneo no encontrado");
+
+            // Devuelve el torneo
+            return tournamentDTO;
+        }
 
 
 

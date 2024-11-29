@@ -21,6 +21,7 @@ namespace GoldRoger.Data.Maps
             // Clave primaria compuesta por TournamentId y TeamId
             builder.HasKey(ls => new { ls.TournamentId, ls.TeamId });
 
+            // Propiedades con valores predeterminados
             builder.Property(ls => ls.Points)
                 .HasDefaultValue(0);
 
@@ -44,6 +45,19 @@ namespace GoldRoger.Data.Maps
 
             builder.Property(ls => ls.GoalDifference)
                 .HasComputedColumnSql("GoalsFor - GoalsAgainst");
+
+            // Relación con Team
+            builder.HasOne(ls => ls.Team)
+                .WithMany(t => t.LeagueStandings)
+                .HasForeignKey(ls => ls.TeamId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Relación con Tournament
+            builder.HasOne(ls => ls.Tournament)
+                .WithMany(t => t.LeagueStandings)
+                .HasForeignKey(ls => ls.TournamentId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
+
 }

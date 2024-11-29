@@ -7,6 +7,8 @@ using GoldRoger.Data;
 using GoldRoger.Entity.Entities;
 using GoldRogerServer.Business.Core;
 using GoldRogerServer.DTOs.Player;
+using GoldRogerServer.DTOs.Tournament;
+
 using Microsoft.EntityFrameworkCore;
 
 
@@ -230,6 +232,71 @@ namespace GoldRogerServer.Business
             // Devuelve las estadísticas del jugador
             return playerStats;
         }
+
+        //metodo para obtenerme el torneo que tenga en el campo de tournamentid el team del playerlogeado usame el tournamentDTO el organizer username vas a tomar el el campo de organizerid y obtendras el username de la tabla users
+        public async Task<TournamentDTO> GetPlayerTournament(int playerId)
+        {
+            // Busca el jugador en la base de datos usando el PlayerId
+            var player = await uow.PlayerRepository.Get(p => p.PlayerId == playerId).FirstOrDefaultAsync();
+
+            // Si no se encuentra el jugador, lanza una excepción
+            if (player == null)
+                throw new ArgumentException("Jugador no encontrado");
+
+            // Si el jugador no tiene un equipo asignado, lanza una excepción
+            if (player.TeamId == null)
+                throw new ArgumentException("Jugador no tiene un equipo asignado");
+
+            // Busca el equipo en la base de datos usando el TeamId del jugador
+            var team = await uow.TeamRepository.Get(t => t.TeamId == player.TeamId).FirstOrDefaultAsync();
+
+            // Si no se encuentra el equipo, lanza una excepción
+            if (team == null)
+                throw new ArgumentException("Equipo no encontrado");
+
+            // Busca el torneo en la base de datos usando el TournamentId del equipo
+            var tournament = await uow.TournamentRepository.Get(t => t.TournamentId == team.TournamentId)
+                .Include(t => t.Organizer) // Incluye la relación con Organizer
+                .ThenInclude(o => o.User) // Incluye la relación con User a través de Organizer
+                .Select(t => new TournamentDTO
+                {
+                    TournamentId = t.TournamentId,
+                    TournamentName = t.TournamentName,
+                    StartDate = t.StartDate,
+                    EndDate = t.EndDate,
+                    TournamentTypeId = t.TournamentTypeId,
+                    OrganizerUsername = t.Organizer.User.Username // Relación de navegación para obtener el username
+                })
+                .FirstOrDefaultAsync();
+
+            // Si no se encuentra el torneo, lanza una excepción
+            if (tournament == null)
+                throw new ArgumentException("Torneo no encontrado");
+
+            // Devuelve el torneo
+            return tournament;
+        }
+
+        //metodo para actualizar el teamid del playerlogeado a null
+        public async Task RemovePlayerFromTeam(int playerId)
+        {
+            // Busca el jugador en la base de datos usando el PlayerId
+            var player = await uow.PlayerRepository.Get(p => p.PlayerId == playerId).FirstOrDefaultAsync();
+
+            // Si no se encuentra el jugador, lanza una excepción
+            if (player == null)
+                throw new ArgumentException("Jugador no encontrado");
+
+            // Actualiza el TeamId del jugador a null
+            player.TeamId = null;
+
+            // Guarda los cambios en la base de datos
+            uow.PlayerRepository.Update(player);
+
+            await uow.SaveAsync();
+        }
+
+
     }
 
 }

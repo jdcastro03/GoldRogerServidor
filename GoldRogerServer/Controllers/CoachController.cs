@@ -213,6 +213,29 @@ namespace GoldRogerServer.Controllers
             }
         }
 
+        //getteamtournamentinfobycoachid
+        [HttpGet("GetTeamTournamentInfoByCoachId")]
+        [Authorize]
+        public async Task<IActionResult> GetTeamTournamentInfoByCoachId()
+        {
+            try
+            {
+                // Obtener el CoachId del usuario logueado
+                int coachId = SessionHelper.GetTokenUserId(User);
+                if (coachId == 0)
+                    return Unauthorized("Usuario no autorizado");
+
+                // Obtener la información del torneo asociado al CoachId
+                var teamTournamentInfo = await _coachBusiness.GetTeamTournamentInfoByCoachId(coachId);
+
+                return Ok(new { Success = true, Data = teamTournamentInfo });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Success = false, Message = ex.Message });
+            }
+        }
+
 
     }
 }

@@ -318,10 +318,21 @@ namespace GoldRoger.Data
             }
         }
 
+        public GenericRepository<LeagueStanding> LeagueStandingRepository
+        {
+            get
+            {
+                if (this.leagueStandingRepository == null)
+                {
+                    this.leagueStandingRepository = new GenericRepository<LeagueStanding>(dbcontext);
+                }
+                return leagueStandingRepository;
+            }
 
 
 
 
 
+        }
     }
 }

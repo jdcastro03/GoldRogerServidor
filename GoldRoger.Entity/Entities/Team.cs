@@ -19,5 +19,7 @@ namespace GoldRoger.Entity.Entities
         // Navegación
         public virtual Coach Coach { get; set; } // Relación uno a uno con Coach
         public virtual ICollection<Player> Players { get; set; } // Relación uno a muchos con Players
+ 
+        public ICollection<LeagueStanding> LeagueStandings { get; set; }
     }
 }

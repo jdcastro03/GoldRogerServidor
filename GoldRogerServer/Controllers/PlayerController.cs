@@ -6,6 +6,7 @@ using GoldRogerServer.Business;
 using GoldRogerServer.Utils;
 using GoldRoger.Entity.Entities.GoldRoger.Entity.Entities;
 using GoldRogerServer.DTOs.Player;
+using GoldRogerServer.DTOs.Tournament;
 using GoldRogerServer.Helpers;
 using Microsoft.AspNetCore.Authorization;
 
@@ -269,6 +270,70 @@ namespace GoldRogerServer.Controllers
             }
 
             return Ok(response);
+        }
+
+        //getplayerTournament
+        [HttpGet("GetPlayerTournament")]
+        [Authorize]
+        public async Task<IActionResult> GetPlayerTournament()
+        {
+            var response = new APIResponse<TournamentDTO> { Success = true };
+
+            try
+            {
+                // Obtener el UserId del usuario logueado (playerId)
+                int playerId = SessionHelper.GetTokenUserId(User);
+                if (playerId == 0)
+                    return Unauthorized("Usuario no autorizado");
+
+                // Llamar al servicio de negocio para obtener el torneo del jugador
+                response.Data = await _playerBusiness.GetPlayerTournament(playerId);
+            }
+            catch (ArgumentException ex)
+            {
+                // Manejar errores como jugador no encontrado
+                response.Success = false;
+                response.Message = ex.Message;
+                return NotFound(response);
+            }
+            catch (Exception ex)
+            {
+                // Manejar errores generales
+                response.Success = false;
+                response.Message = ex.Message;
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
+
+        //removeplayerfromteam
+        [HttpDelete("RemovePlayerFromTeam")]
+        [Authorize]
+        public async Task<IActionResult> RemovePlayerFromTeam()
+        {
+            try
+            {
+                // Obtener el UserId del usuario logueado (playerId)
+                int playerId = SessionHelper.GetTokenUserId(User);
+                if (playerId == 0)
+                    return Unauthorized("Usuario no autorizado");
+
+                // Llamar al servicio de negocio para remover al jugador del equipo
+                await _playerBusiness.RemovePlayerFromTeam(playerId);
+
+                return Ok(new { Success = true, Message = "Jugador removido del equipo con éxito" });
+            }
+            catch (ArgumentException ex)
+            {
+                // Manejar errores como jugador no encontrado
+                return NotFound(new { Success = false, Message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                // Manejar errores generales
+                return StatusCode(500, new { Success = false, Message = ex.Message });
+            }
         }
     }
 }

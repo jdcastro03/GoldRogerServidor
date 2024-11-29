@@ -19,6 +19,9 @@ namespace GoldRoger.Entity.Entities
         public int GoalsFor { get; set; } // Goles a favor
         public int GoalsAgainst { get; set; } // Goles en contra
         public int GoalDifference { get; set; } // Diferencia de goles(calculada)
+
+        public Team Team { get; set; }
+        public Tournament Tournament { get; set; }
     }
 }
 
