@@ -8,6 +8,7 @@ using GoldRogerServer.DTOs.Organizer;
 using GoldRogerServer.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using GoldRoger.Entity.Entities;
+using GoldRogerServer.DTOs.Player;
 
 namespace GoldRogerServer.Controllers
 {
@@ -123,6 +124,35 @@ namespace GoldRogerServer.Controllers
                 response.Success = false;
                 response.Message = ex.Message;
                 return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+
+
+        //getteamtournamentsbyid
+
+        [HttpGet("GetTeamsByTournamentId")]
+        public async Task<IActionResult> GetTeamsByTournamentId(int tournamentId)
+        {
+            var response = new APIResponse<List<TeamInfoDTO>> { Success = true };
+
+            try
+            {
+                // Llamamos al método de negocio que obtiene los equipos por TournamentId
+                response.Data = await _organizerBusiness.GetTeamsByTournamentId(tournamentId);
+            }
+            catch (ArgumentException ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = "Ocurrió un error al obtener los equipos del torneo.";
+                return StatusCode(500, response);
             }
 
             return Ok(response);

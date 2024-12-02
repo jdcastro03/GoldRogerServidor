@@ -123,6 +123,40 @@ namespace GoldRogerServer.Business
         }
 
 
+        //metodo para obtener el todos los teamnames, y teamid recibiendo de parametro el tournamentid
+
+
+
+        public async Task<List<TeamInfoDTO>> GetTeamsByTournamentId(int tournamentId)
+        {
+            // Verificar si el torneo existe
+            var tournamentExists = await uow.TournamentRepository
+                .Get(t => t.TournamentId == tournamentId)
+                .AnyAsync();
+
+            if (!tournamentExists)
+                throw new ArgumentException("Torneo no encontrado");
+
+            // Obtener los equipos asociados al torneo
+            var teams = await uow.TeamRepository
+                .Get(team => team.TournamentId == tournamentId) // Filtro por TournamentId
+                .Select(team => new TeamInfoDTO
+                {
+                    TeamId = team.TeamId,
+                    TeamName = team.TeamName
+                })
+                .ToListAsync();
+
+            return teams;
+        }
+
+
+
+
+
+
+
+
 
     }
 }
