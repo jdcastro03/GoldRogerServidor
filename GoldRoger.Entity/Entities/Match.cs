@@ -12,8 +12,15 @@ namespace GoldRoger.Entity.Entities
         public int TournamentId { get; set; } // Identificador del torneo
         public int Team1Id { get; set; } // Identificador del primer equipo
         public int Team2Id { get; set; } // Identificador del segundo equipo
-        public DateTime Date { get; set; } // Fecha del partido
-        public string Score { get; set; } // Resultado del partido
+
+        public int Team1Goals { get; set; } // Goles del primer equipo
+        public int Team2Goals { get; set; } // Goles del segundo equipo
+
+        public DateTime? Date { get; set; } // Fecha del partido
+
+        public bool? IsFinished { get; set; }
+
+
 
         // Navegación
         public virtual Tournament Tournament { get; set; } // Relación muchos a uno con Tournament

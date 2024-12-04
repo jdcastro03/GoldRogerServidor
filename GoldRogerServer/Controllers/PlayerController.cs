@@ -335,6 +335,36 @@ namespace GoldRogerServer.Controllers
                 return StatusCode(500, new { Success = false, Message = ex.Message });
             }
         }
+
+        //getplayerstatsbyid    
+        [HttpGet("GetPlayerStatsById")]
+        [Authorize]
+        public async Task<IActionResult> GetPlayerStatsById(int playerId)
+        {
+            var response = new APIResponse<PlayerStatsDTO> { Success = true };
+
+            try
+            {
+                // Llamar al servicio de negocio para obtener las estadísticas del jugador
+                response.Data = await _playerBusiness.GetPlayerStats(playerId);
+            }
+            catch (ArgumentException ex)
+            {
+                // Manejar errores como jugador no encontrado
+                response.Success = false;
+                response.Message = ex.Message;
+                return NotFound(response);
+            }
+            catch (Exception ex)
+            {
+                // Manejar errores generales
+                response.Success = false;
+                response.Message = ex.Message;
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
     }
 }
 

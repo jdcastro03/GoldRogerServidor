@@ -158,6 +158,103 @@ namespace GoldRogerServer.Controllers
             return Ok(response);
         }
 
+        //ELIMINATORIA
+        //createRandomMatchesTournament2
+
+        [HttpPost("CreateRandomMatchesTournament2")]
+        public async Task<IActionResult> CreateRandomMatchesTournament2(int tournamentId)
+        {
+            var response = new APIResponse<bool> { Success = true };
+
+            try
+            {
+                // Llamamos al método de negocio que crea los partidos aleatorios
+                await _organizerBusiness.CreateRandomMatchesTournament2(tournamentId);
+
+                // Si llegamos aquí sin excepciones, significa que todo salió bien
+                response.Data = true; // Puedes indicar que la operación fue exitosa.
+            }
+            catch (ArgumentException ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = "Ocurrió un error al crear los partidos aleatorios.";
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
+
+
+        //createnextRoundMatches
+
+        [HttpPost("CreateNextRoundMatches")]
+        public async Task<IActionResult> CreateNextRoundMatches(int tournamentId)
+        {
+            var response = new APIResponse<bool> { Success = true };
+
+            try
+            {
+                // Llamamos al método de negocio que crea los partidos de la siguiente ronda
+                await _organizerBusiness.CreateNextRoundMatches(tournamentId);
+
+                // Si llegamos aquí sin excepciones, significa que todo salió bien
+                response.Data = true; // Puedes indicar que la operación fue exitosa.
+            }
+            catch (ArgumentException ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = "Ocurrió un error al crear los partidos de la siguiente ronda.";
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
+
+
+        //createfinalmatch
+
+        [HttpPost("CreateFinalMatch")]
+        public async Task<IActionResult> CreateFinalMatch(int tournamentId)
+        {
+            var response = new APIResponse<bool> { Success = true };
+
+            try
+            {
+                // Llamamos al método de negocio que crea el partido final
+                await _organizerBusiness.CreateFinalMatch(tournamentId);
+
+                // Si llegamos aquí sin excepciones, significa que todo salió bien
+                response.Data = true; // Puedes indicar que la operación fue exitosa.
+            }
+            catch (ArgumentException ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = "Ocurrió un error al crear el partido final.";
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
+
+
     }
 
 }

@@ -13,12 +13,9 @@ namespace GoldRoger.Data.Maps
     {
         public void Configure(EntityTypeBuilder<Match> builder)
         {
-            builder.ToTable("Matches");
+            builder.ToTable("Match");
 
-            builder.HasKey(m => m.MatchId);
-            builder.Property(m => m.Score)
-                .IsRequired()
-                .HasMaxLength(50);
+            
 
             builder.HasOne(m => m.Tournament)
                 .WithMany(t => t.Matches)

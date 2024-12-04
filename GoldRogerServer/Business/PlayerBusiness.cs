@@ -297,6 +297,41 @@ namespace GoldRogerServer.Business
         }
 
 
+        //metoo para obtener el firstname, lastname, goles, tarjetas amarillas y rojas el id del player que se le pase como parametro
+        public async Task<PlayerStatsDTO> GetPlayerStatsById(int playerId)
+        {
+            // Busca el jugador en la base de datos usando el PlayerId
+            var player = await uow.PlayerRepository.Get(p => p.PlayerId == playerId)
+                .Include(p => p.User) // Incluye la relación con User
+                .Include(p => p.PlayerStats) // Incluye la relación con PlayerStats
+                .FirstOrDefaultAsync();
+
+            // Si no se encuentra el jugador, lanza una excepción
+            if (player == null)
+                throw new ArgumentException("Jugador no encontrado");
+
+            // Si el jugador no tiene asociado un usuario, lanza una excepción
+            if (player.User == null)
+                throw new ArgumentException("Usuario no encontrado para el jugador");
+
+            // Si el jugador no tiene estadísticas, lanza una excepción
+            if (player.PlayerStats == null)
+                throw new ArgumentException("Estadísticas del jugador no encontradas");
+
+            // Crea un objeto PlayerStatsDTO con los datos del jugador
+            var playerStats = new PlayerStatsDTO
+            {
+                PlayerId = player.PlayerId,
+                FirstName = player.User.FirstName,
+                LastName = player.User.LastName,
+                Goals = player.PlayerStats.Goals,
+                YellowCards = player.PlayerStats.YellowCards,
+                RedCards = player.PlayerStats.RedCards
+            };
+
+            // Devuelve las estadísticas del jugador
+            return playerStats;
+        }
     }
 
 }

@@ -47,7 +47,7 @@ namespace GoldRoger.Data
 
         public DbSet<Tournament> Tournaments { get; set; }
         public DbSet<TournamentType> TournamentType { get; set; }
-        public DbSet<Match> Matches { get; set; }
+        public DbSet<Match> Match { get; set; }
         public DbSet<TeamStats> TeamStats { get; set; }
         public DbSet<PlayerStats> PlayerStats { get; set; }
         public DbSet<Coach> Coaches { get; set; }

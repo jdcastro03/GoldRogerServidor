@@ -77,5 +77,10 @@ namespace GoldRoger.Data.Repositories.Core
             dbSet.Attach(entityToUpdate);
             context.Entry(entityToUpdate).State = EntityState.Modified;
         }
+
+        public virtual void InsertRange(IEnumerable<TEntity> entities)
+        {
+            dbSet.AddRange(entities);  // Esto agrega todos los elementos al DbSet
+        }
     }
 }
