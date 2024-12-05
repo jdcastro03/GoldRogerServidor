@@ -20,6 +20,8 @@ namespace GoldRoger.Entity.Entities
 
         public bool? IsFinished { get; set; }
 
+        public int? Stage { get; set; } // Etapa del torneo
+
 
 
         // Navegación

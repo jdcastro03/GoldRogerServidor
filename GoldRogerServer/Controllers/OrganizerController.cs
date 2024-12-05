@@ -5,6 +5,7 @@ using GoldRogerServer.Business;
 using GoldRogerServer.Utils;
 using GoldRoger.Entity.Entities.GoldRoger.Entity.Entities;
 using GoldRogerServer.DTOs.Organizer;
+using GoldRogerServer.DTOs.Match;
 using GoldRogerServer.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using GoldRoger.Entity.Entities;
@@ -161,15 +162,16 @@ namespace GoldRogerServer.Controllers
         //ELIMINATORIA
         //createRandomMatchesTournament2
 
-        [HttpPost("CreateRandomMatchesTournament2")]
-        public async Task<IActionResult> CreateRandomMatchesTournament2(int tournamentId)
+        [HttpPost("CreateQuarterFinals")]
+        public async Task<IActionResult> CreateQuarterFinals(int tournamentId)
         {
+
             var response = new APIResponse<bool> { Success = true };
 
             try
             {
                 // Llamamos al método de negocio que crea los partidos aleatorios
-                await _organizerBusiness.CreateRandomMatchesTournament2(tournamentId);
+                await _organizerBusiness.CreateQuarterFinals(tournamentId);
 
                 // Si llegamos aquí sin excepciones, significa que todo salió bien
                 response.Data = true; // Puedes indicar que la operación fue exitosa.
@@ -190,18 +192,45 @@ namespace GoldRogerServer.Controllers
             return Ok(response);
         }
 
+        //getquarterfinalsmatches
+
+        [HttpGet("GetQuarterFinalsMatches")]
+        public async Task<IActionResult> GetQuarterFinalsMatches(int tournamentId)
+        {
+            var response = new APIResponse<List<MatchInfoDTO>> { Success = true };
+
+            try
+            {
+                // Llamamos al método de negocio que obtiene los partidos de cuartos de final
+                response.Data = await _organizerBusiness.GetQuarterFinalsMatches(tournamentId);
+            }
+            catch (ArgumentException ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = "Ocurrió un error al obtener los partidos de cuartos de final.";
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
 
         //createnextRoundMatches
 
-        [HttpPost("CreateNextRoundMatches")]
-        public async Task<IActionResult> CreateNextRoundMatches(int tournamentId)
+        [HttpPost("CreateSemiFinals")]
+        public async Task<IActionResult> CreateSemiFinals(int tournamentId)
         {
             var response = new APIResponse<bool> { Success = true };
 
             try
             {
                 // Llamamos al método de negocio que crea los partidos de la siguiente ronda
-                await _organizerBusiness.CreateNextRoundMatches(tournamentId);
+                await _organizerBusiness.CreateSemiFinals(tournamentId);
 
                 // Si llegamos aquí sin excepciones, significa que todo salió bien
                 response.Data = true; // Puedes indicar que la operación fue exitosa.
@@ -222,18 +251,45 @@ namespace GoldRogerServer.Controllers
             return Ok(response);
         }
 
+        //getsemifinalsmatches
+
+        [HttpGet("GetSemiFinalsMatches")]
+        public async Task<IActionResult> GetSemiFinalsMatches(int tournamentId)
+        {
+            var response = new APIResponse<List<MatchInfoDTO>> { Success = true };
+
+            try
+            {
+                // Llamamos al método de negocio que obtiene los partidos de semifinales
+                response.Data = await _organizerBusiness.GetSemiFinalsMatches(tournamentId);
+            }
+            catch (ArgumentException ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = "Ocurrió un error al obtener los partidos de semifinales.";
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
 
         //createfinalmatch
 
-        [HttpPost("CreateFinalMatch")]
-        public async Task<IActionResult> CreateFinalMatch(int tournamentId)
+        [HttpPost("CreateFinal")]
+        public async Task<IActionResult> CreateFinal(int tournamentId)
         {
             var response = new APIResponse<bool> { Success = true };
 
             try
             {
                 // Llamamos al método de negocio que crea el partido final
-                await _organizerBusiness.CreateFinalMatch(tournamentId);
+                await _organizerBusiness.CreateFinal(tournamentId);
 
                 // Si llegamos aquí sin excepciones, significa que todo salió bien
                 response.Data = true; // Puedes indicar que la operación fue exitosa.
@@ -255,6 +311,33 @@ namespace GoldRogerServer.Controllers
         }
 
 
+        //getfinalmatch
+
+        [HttpGet("GetFinalMatch")]
+        public async Task<IActionResult> GetFinalMatch(int tournamentId)
+        {
+            var response = new APIResponse<MatchInfoDTO> { Success = true };
+
+            try
+            {
+                // Llamamos al método de negocio que obtiene el partido final
+                response.Data = await _organizerBusiness.GetFinalMatch(tournamentId);
+            }
+            catch (ArgumentException ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = "Ocurrió un error al obtener el partido final.";
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
     }
 
 }

@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using GoldRoger.Entity.Entities;
 using GoldRogerServer.DTOs.Organizer;
 
+using GoldRogerServer.DTOs.Match;
+
 namespace GoldRogerServer.Business
 {
     public class OrganizerBusiness : BaseBusiness
@@ -154,7 +156,7 @@ namespace GoldRogerServer.Business
 
         //METODO ELIMINATORIA
         //metodo que toma de parametro el tournamenid y va generar los partidos de eliminatoria directa son 8 equipos por lo tanto generara 4 partidos en la primera ronda y 2 en la segunda y 1 en la final
-        public async Task CreateRandomMatchesTournament2(int tournamentId)
+        public async Task CreateQuarterFinals(int tournamentId)
         {
             // Verificar si el torneo existe
             var tournamentExists = await uow.TournamentRepository
@@ -185,7 +187,8 @@ namespace GoldRogerServer.Business
                     Team1Goals = 0,
                     Team2Goals = 0,
                     Date = null,
-                    IsFinished = false
+                    IsFinished = false,
+                    Stage = 4
                 };
 
                 matches.Add(match);
@@ -194,14 +197,14 @@ namespace GoldRogerServer.Business
             // Insertar los partidos en la base de datos
             uow.MatchRepository.InsertRange(matches);
             await uow.SaveAsync();
+            //llama el metoo para getQuarterFinalsMatches
+
+
+
         }
 
-       
-        //metodo que recibira como parametro el torunamentid y verifica los partidos que se jugaron y los siguientes dos partidos con los teamdid que ganaron, pero primero debe verificar si los 4 partidos fueron finalizados, ten en cuenta que avanzaron los 4 equipos que hayan hecho mas goles que el contrario y se generaran los os partiodos con esos 4 
-
-
-        
-        public async Task CreateNextRoundMatches(int tournamentId)
+        //metodo para obtener los nombres de los equipos de cada partido de los cuartos de final
+        public async Task<List<MatchInfoDTO>> GetQuarterFinalsMatches(int tournamentId)
         {
             // Verificar si el torneo existe
             var tournamentExists = await uow.TournamentRepository
@@ -211,14 +214,60 @@ namespace GoldRogerServer.Business
             if (!tournamentExists)
                 throw new ArgumentException("Torneo no encontrado");
 
-            // Obtener los partidos de la ronda actual
+            // Obtener los partidos que tengan el del modelo match la propiedadd Stage con valor 4
             var currentRoundMatches = await uow.MatchRepository
-                .Get(m => m.TournamentId == tournamentId && m.IsFinished == true)
+                .Get(m => m.TournamentId == tournamentId && m.Stage == 4)
                 .ToListAsync();
 
-            // Validar que se hayan jugado los 4 partidos
-            if (currentRoundMatches.Count != 4)
-                throw new ArgumentException("No se han jugado los 4 partidos de la ronda actual");
+           
+
+
+            // Obtener los nombres de los equipos de los partidos
+            var matches = new List<MatchInfoDTO>();
+            foreach (var match in currentRoundMatches)
+            {
+                var team1 = await uow.TeamRepository.Get(t => t.TeamId == match.Team1Id).FirstOrDefaultAsync();
+                var team2 = await uow.TeamRepository.Get(t => t.TeamId == match.Team2Id).FirstOrDefaultAsync();
+
+                matches.Add(new MatchInfoDTO
+                {
+                    MatchId = match.MatchId,
+                    Team1Name = team1.TeamName,
+                    Team2Name = team2.TeamName
+                });
+            }
+
+            return matches;
+        }
+
+       
+        //metodo que recibira como parametro el torunamentid y verifica los partidos que se jugaron y los siguientes dos partidos con los teamdid que ganaron, pero primero debe verificar si los 4 partidos fueron finalizados, ten en cuenta que avanzaron los 4 equipos que hayan hecho mas goles que el contrario y se generaran los os partiodos con esos 4 
+
+
+        
+        public async Task CreateSemiFinals(int tournamentId)
+        {
+            // Verificar si el torneo existe
+            var tournamentExists = await uow.TournamentRepository
+                .Get(t => t.TournamentId == tournamentId)
+                .AnyAsync();
+
+            if (!tournamentExists)
+                throw new ArgumentException("Torneo no encontrado");
+
+           //verifica si todos los partidos que tengan stage 4 en isfinishe tengan 1
+           var allMatchesFinished = await uow.MatchRepository
+                .Get(m => m.TournamentId == tournamentId && m.Stage == 4 && m.IsFinished == false)
+                .AnyAsync();
+
+            if (allMatchesFinished)
+                throw new ArgumentException("No se han jugado todos los partidos de la ronda anterior");
+
+            // Obtener los partidos de la ronda anterior
+            var currentRoundMatches = await uow.MatchRepository
+                .Get(m => m.TournamentId == tournamentId && m.Stage == 4)
+                .ToListAsync();
+
 
             // Obtener los 4 equipos que avanzan a la siguiente ronda
             var nextRoundTeams = new List<int>();
@@ -242,7 +291,8 @@ namespace GoldRogerServer.Business
                     Team1Goals = 0,
                     Team2Goals = 0,
                     Date = null,
-                    IsFinished = false
+                    IsFinished = false,
+                    Stage = 2
                 };
 
                 matches.Add(match);
@@ -251,11 +301,13 @@ namespace GoldRogerServer.Business
             // Insertar los partidos en la base de datos
             uow.MatchRepository.InsertRange(matches);
             await uow.SaveAsync();
-        }
-   
 
-        //metoddo que verifica si los dos partidos de la ronda anterior osea los ultimos 2 registros fueron finalizados y genera el partido final con los dos equipos que ganaron de esos ultimos dos partidos
-        public async Task CreateFinalMatch(int tournamentId)
+            //aqui mismo quiero que hagas 
+        }
+
+        
+        //metoo para el getsemifinalsmatches
+        public async Task<List<MatchInfoDTO>> GetSemiFinalsMatches(int tournamentId)
         {
             // Verificar si el torneo existe
             var tournamentExists = await uow.TournamentRepository
@@ -265,16 +317,58 @@ namespace GoldRogerServer.Business
             if (!tournamentExists)
                 throw new ArgumentException("Torneo no encontrado");
 
-            // Obtener los partidos de la ronda anterior
-            var previousRoundMatches = await uow.MatchRepository
-                .Get(m => m.TournamentId == tournamentId && m.IsFinished == true)
-                .OrderByDescending(m => m.MatchId)
-                .Take(2)
+            // Obtener los partidos que tengan el del modelo match la propiedadd Stage con valor 2
+            var currentRoundMatches = await uow.MatchRepository
+                .Get(m => m.TournamentId == tournamentId && m.Stage == 2)
                 .ToListAsync();
 
-            // Validar que se hayan jugado los 2 partidos de la ronda anterior
-            if (previousRoundMatches.Count != 2)
-                throw new ArgumentException("No se han jugado los 2 partidos de la ronda anterior");
+            // Obtener los nombres de los equipos de los partidos
+            var matches = new List<MatchInfoDTO>();
+            foreach (var match in currentRoundMatches)
+            {
+                var team1 = await uow.TeamRepository.Get(t => t.TeamId == match.Team1Id).FirstOrDefaultAsync();
+                var team2 = await uow.TeamRepository.Get(t => t.TeamId == match.Team2Id).FirstOrDefaultAsync();
+
+                matches.Add(new MatchInfoDTO
+                {
+                    MatchId = match.MatchId,
+                    Team1Name = team1.TeamName,
+                    Team2Name = team2.TeamName
+                });
+            }
+
+            return matches;
+        }
+
+
+        
+
+
+   
+
+        //metoddo que verifica si los dos partidos de la ronda anterior osea los ultimos 2 registros fueron finalizados y genera el partido final con los dos equipos que ganaron de esos ultimos dos partidos
+        public async Task CreateFinal(int tournamentId)
+        {
+            // Verificar si el torneo existe
+            var tournamentExists = await uow.TournamentRepository
+                .Get(t => t.TournamentId == tournamentId)
+                .AnyAsync();
+
+            if (!tournamentExists)
+                throw new ArgumentException("Torneo no encontrado");
+
+            //verificar que los matches que tengan stage 2 en isfinished tengan 1
+            var allMatchesFinished = await uow.MatchRepository
+                .Get(m => m.TournamentId == tournamentId && m.Stage == 2 && m.IsFinished == false)
+                .AnyAsync();
+
+            if (allMatchesFinished)
+                throw new ArgumentException("No se han jugado todos los partidos de la ronda anterior");
+
+            // Obtener los partidos de la ronda anterior
+            var previousRoundMatches = await uow.MatchRepository
+                .Get(m => m.TournamentId == tournamentId && m.Stage == 2)
+                .ToListAsync();
 
             // Obtener los 2 equipos que avanzan a la final
             var finalTeams = new List<int>();
@@ -295,15 +389,45 @@ namespace GoldRogerServer.Business
                 Team1Goals = 0,
                 Team2Goals = 0,
                 Date = null,
-                IsFinished = false
+                IsFinished = false,
+                Stage = 1
             };
 
             // Insertar el partido final en la base de datos
             uow.MatchRepository.Insert(finalMatch);
             await uow.SaveAsync();
         }
+
+        //getfinalmatch
+        public async Task<MatchInfoDTO> GetFinalMatch(int tournamentId)
+        {
+            // Verificar si el torneo existe
+            var tournamentExists = await uow.TournamentRepository
+                .Get(t => t.TournamentId == tournamentId)
+                .AnyAsync();
+
+            if (!tournamentExists)
+                throw new ArgumentException("Torneo no encontrado");
+
+            // Obtener el partido que tenga el del modelo match la propiedadd Stage con valor 1
+            var finalMatch = await uow.MatchRepository
+                .Get(m => m.TournamentId == tournamentId && m.Stage == 1)
+                .FirstOrDefaultAsync();
+
+            // Obtener los nombres de los equipos del partido
+            var team1 = await uow.TeamRepository.Get(t => t.TeamId == finalMatch.Team1Id).FirstOrDefaultAsync();
+            var team2 = await uow.TeamRepository.Get(t => t.TeamId == finalMatch.Team2Id).FirstOrDefaultAsync();
+
+            return new MatchInfoDTO
+            {
+                MatchId = finalMatch.MatchId,
+                Team1Name = team1.TeamName,
+                Team2Name = team2.TeamName
+            };
+        }
     
 
+        //FIN CREACION DE ELIMINATORIAS 8
 
 
 
