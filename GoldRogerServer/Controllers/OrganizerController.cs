@@ -338,6 +338,180 @@ namespace GoldRogerServer.Controllers
 
             return Ok(response);
         }
+
+
+        //getquarterfinalsresults
+
+        [HttpGet("GetQuarterFinalsResults")]
+        public async Task<IActionResult> GetQuarterFinalsResults(int tournamentId)
+        {
+            var response = new APIResponse<List<MatchResultDTO>> { Success = true };
+
+            try
+            {
+                // Llamamos al método de negocio que obtiene los resultados de cuartos de final
+                response.Data = await _organizerBusiness.GetQuarterFinalsResults(tournamentId);
+            }
+            catch (ArgumentException ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = "Ocurrió un error al obtener los resultados de cuartos de final.";
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
+
+        //getsemifinalsresults
+
+        [HttpGet("GetSemiFinalsResults")]
+        public async Task<IActionResult> GetSemiFinalsResults(int tournamentId)
+        {
+            var response = new APIResponse<List<MatchResultDTO>> { Success = true };
+
+            try
+            {
+                // Llamamos al método de negocio que obtiene los resultados de semifinales
+                response.Data = await _organizerBusiness.GetSemiFinalsResults(tournamentId);
+            }
+            catch (ArgumentException ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = "Ocurrió un error al obtener los resultados de semifinales.";
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
+
+        //getfinalresult
+
+        [HttpGet("GetFinalResult")]
+        public async Task<IActionResult> GetFinalResult(int tournamentId)
+        {
+            var response = new APIResponse<MatchResultDTO> { Success = true };
+
+            try
+            {
+                // Llamamos al método de negocio que obtiene el resultado de la final
+                response.Data = await _organizerBusiness.GetFinalResult(tournamentId);
+            }
+            catch (ArgumentException ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = "Ocurrió un error al obtener el resultado de la final.";
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
+
+
+        //getplayerstatsbytournamentid utilizaremos tournamentplayerstatsdto
+
+        [HttpGet("GetPlayerStatsByTournamentId")]
+        public async Task<IActionResult> GetPlayerStatsByTournamentId(int tournamentId)
+        {
+            var response = new APIResponse<List<TournamentPlayerStatsDTO>> { Success = true };
+
+            try
+            {
+                // Llamamos al método de negocio que obtiene las estadísticas de los jugadores por TournamentId
+                response.Data = await _organizerBusiness.GetPlayerStatsByTournamentId(tournamentId);
+            }
+            catch (ArgumentException ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = "Ocurrió un error al obtener las estadísticas de los jugadores del torneo.";
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
+
+        //createleaguematches
+
+        [HttpPost("CreateLeagueMatches")]
+        public async Task<IActionResult> CreateLeagueMatches(int tournamentId)
+        {
+            var response = new APIResponse<bool> { Success = true };
+
+            try
+            {
+                // Llamamos al método de negocio que crea los partidos de la liga
+                await _organizerBusiness.CreateLeagueMatches(tournamentId);
+
+                // Si llegamos aquí sin excepciones, significa que todo salió bien
+                response.Data = true; // Puedes indicar que la operación fue exitosa.
+            }
+            catch (ArgumentException ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = "Ocurrió un error al crear los partidos de la liga.";
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
+
+        //getleaguematches
+
+        [HttpGet("GetLeagueMatches")]
+        public async Task<IActionResult> GetLeagueMatches(int tournamentId)
+        {
+            var response = new APIResponse<List<MatchLeagueInfoDTO>> { Success = true };
+
+            try
+            {
+                // Llamamos al método de negocio que obtiene los partidos de la liga
+                response.Data = await _organizerBusiness.GetLeagueMatches(tournamentId);
+            }
+            catch (ArgumentException ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = "Ocurrió un error al obtener los partidos de la liga.";
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
+
     }
 
 }
