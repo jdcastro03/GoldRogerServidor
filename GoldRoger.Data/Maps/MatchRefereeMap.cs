@@ -1,31 +1,27 @@
-﻿using GoldRoger.Entity.Entities;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace GoldRoger.Data.Maps
+using GoldRoger.Entity.Entities;
+
+public class MatchRefereeMap : IEntityTypeConfiguration<MatchReferee>
 {
-    public class MatchRefereeMap : IEntityTypeConfiguration<MatchReferee>
+    public void Configure(EntityTypeBuilder<MatchReferee> builder)
     {
-        public void Configure(EntityTypeBuilder<MatchReferee> builder)
-        {
-            builder.ToTable("MatchReferees");
+        builder.ToTable("MatchReferees");
 
-            builder.HasKey(mr => new { mr.MatchId, mr.RefereeId });
+        // Define que MatchId y RefereeId no son claves primarias ahora
+        builder.HasKey(mr => new { mr.MatchId, mr.RefereeId });
 
-            builder.HasOne(mr => mr.Match)
-                .WithMany(m => m.MatchReferees)
-                .HasForeignKey(mr => mr.MatchId)
-                .OnDelete(DeleteBehavior.Restrict);
+        // Relación con la tabla 'Match' sin claves foráneas (sin eliminación en cascada)
+        builder.HasOne(mr => mr.Match)
+            .WithMany(m => m.MatchReferees)
+            .HasForeignKey(mr => mr.MatchId) // Relación con MatchId
+            .OnDelete(DeleteBehavior.Restrict);  // El comportamiento en borrado puede ser configurado
 
-            builder.HasOne(mr => mr.Referee)
-                .WithMany(r => r.MatchReferees)
-                .HasForeignKey(mr => mr.RefereeId)
-                .OnDelete(DeleteBehavior.Restrict);
-        }
+        // Relación con la tabla 'Referee' sin claves foráneas (sin eliminación en cascada)
+        builder.HasOne(mr => mr.Referee)
+            .WithMany(r => r.MatchReferees)
+            .HasForeignKey(mr => mr.RefereeId) // Relación con RefereeId
+            .OnDelete(DeleteBehavior.Restrict);  // El comportamiento en borrado puede ser configurado
     }
 }

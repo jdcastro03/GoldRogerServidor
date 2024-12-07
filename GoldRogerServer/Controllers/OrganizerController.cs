@@ -512,6 +512,93 @@ namespace GoldRogerServer.Controllers
             return Ok(response);
         }
 
+        //getleaguematchresults
+
+        [HttpGet("GetLeagueMatchResults")]
+        public async Task<IActionResult> GetLeagueMatchResults(int tournamentId)
+        {
+            var response = new APIResponse<List<MatchLeagueResultDTO>> { Success = true };
+
+            try
+            {
+                // Llamamos al método de negocio que obtiene los resultados de los partidos de la liga
+                response.Data = await _organizerBusiness.GetLeagueMatchResults(tournamentId);
+            }
+            catch (ArgumentException ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = "Ocurrió un error al obtener los resultados de los partidos de la liga.";
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
+
+        //updatematchdate   
+
+        [HttpPost("UpdateMatchDate")]
+        public async Task<IActionResult> UpdateMatchDate([FromBody] UpdateMatchDateDTO updateMatchDateDTO)
+        {
+            var response = new APIResponse<bool> { Success = true };
+
+            try
+            {
+                // Llamamos al método de negocio que actualiza la fecha de un partido
+                await _organizerBusiness.UpdateMatchDate(updateMatchDateDTO);
+
+                // Si llegamos aquí sin excepciones, significa que todo salió bien
+                response.Data = true; // Puedes indicar que la operación fue exitosa.
+            }
+            catch (ArgumentException ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = "Ocurrió un error al actualizar la fecha del partido.";
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
+
+        //getmatchdate
+
+        [HttpGet("GetMatchDate")]
+        public async Task<IActionResult> GetMatchDate(int matchId)
+        {
+            var response = new APIResponse<DateTime?> { Success = true };
+
+            try
+            {
+                // Llamamos al método de negocio que obtiene la fecha de un partido
+                response.Data = await _organizerBusiness.GetMatchDate(matchId);
+            }
+            catch (ArgumentException ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = "Ocurrió un error al obtener la fecha del partido.";
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
+
     }
 
 }

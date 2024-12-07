@@ -686,8 +686,77 @@ namespace GoldRogerServer.Business
 
 
 
+        //getleaguematchresults recibiedo el tournamentid y obtendras los resultados de los match que isfinished sea 1 obtenieno meiante matchleagueresultdto
+        public async Task<List<MatchLeagueResultDTO>> GetLeagueMatchResults(int tournamentId)
+        {
+            // Verificar si el torneo existe
+            var tournamentExists = await uow.TournamentRepository
+                .Get(t => t.TournamentId == tournamentId)
+                .AnyAsync();
+
+            if (!tournamentExists)
+                throw new ArgumentException("Torneo no encontrado");
+
+            // Obtener los partidos que tengan el del modelo match la propiedadd IsFinished con valor true
+            var matches = await uow.MatchRepository
+                .Get(m => m.TournamentId == tournamentId && m.IsFinished == true)
+                .ToListAsync();
+
+            // Obtener los resultados de los partidos
+            var results = new List<MatchLeagueResultDTO>();
+            foreach (var match in matches)
+            {
+                var team1 = await uow.TeamRepository.Get(t => t.TeamId == match.Team1Id).FirstOrDefaultAsync();
+                var team2 = await uow.TeamRepository.Get(t => t.TeamId == match.Team2Id).FirstOrDefaultAsync();
+
+                results.Add(new MatchLeagueResultDTO
+                {
+                    MatchId = match.MatchId,
+                    Team1Name = team1.TeamName,
+                    Team1Goals = match.Team1Goals,
+                    Team2Name = team2.TeamName,
+                    Team2Goals = match.Team2Goals,
+                    Stage = match.Stage
+                });
+            }
+
+            return results;
+        }
 
 
+
+        //metodo para actualizar la date del matchid UTILIZANO updatematchdatedto
+        public async Task UpdateMatchDate(UpdateMatchDateDTO updateMatchDateDTO)
+        {
+            // Busca el partido en la base de datos usando el MatchId
+            var match = await uow.MatchRepository.Get(m => m.MatchId == updateMatchDateDTO.MatchId).FirstOrDefaultAsync();
+
+            // Si no se encuentra el partido, lanza una excepción
+            if (match == null)
+                throw new ArgumentException("Partido no encontrado");
+
+            // Actualiza la fecha del partido
+            match.Date = updateMatchDateDTO.NewDate;
+
+            // Actualiza el partido en la base de datos
+            uow.MatchRepository.Update(match);
+            await uow.SaveAsync();
+        }
+
+
+        //metodo para obtener el la date del matchid UTILIZANO updatematchdatedto
+        public async Task<DateTime?> GetMatchDate(int matchId)
+        {
+            // Busca el partido en la base de datos usando el MatchId
+            var match = await uow.MatchRepository.Get(m => m.MatchId == matchId).FirstOrDefaultAsync();
+
+            // Si no se encuentra el partido, lanza una excepción o devuelve null
+            if (match == null)
+                throw new ArgumentException("Partido no encontrado");
+
+            // Devuelve la fecha del partido
+            return match.Date;
+        }
 
 
 

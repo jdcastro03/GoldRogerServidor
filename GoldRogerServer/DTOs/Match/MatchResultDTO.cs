@@ -11,5 +11,7 @@
         public String Team2Name { get; set; }
 
         public int Team2Goals { get; set; }
+
+
     }
 }
