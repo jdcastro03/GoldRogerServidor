@@ -599,6 +599,96 @@ namespace GoldRogerServer.Controllers
             return Ok(response);
         }
 
+        //updateleaguestandings
+        [HttpPost]
+        [Route("UpdateLeagueStandings")]
+        public async Task<IActionResult> UpdateLeagueStandings(int tournamentId)
+        {
+            var response = new APIResponse<bool> { Success = true };
+
+            try
+            {
+                // Llamamos al método de negocio que actualiza las posiciones de la liga
+                await _organizerBusiness.UpdateLeagueStandings(tournamentId);
+
+                // Si llegamos aquí sin excepciones, significa que todo salió bien
+                response.Data = true; // Puedes indicar que la operación fue exitosa.
+            }
+            catch (ArgumentException ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = "Ocurrió un error al actualizar las posiciones de la liga.";
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
+
+        //updateleaguestandings
+        //[HttpPost]
+        //[Route("UpdateLeagueStandings")]
+        //public async Task<IActionResult> UpdateLeagueStandings(int tournamentId)
+        //{
+        //    var response = new APIResponse<bool> { Success = true };
+
+        //    try
+        //    {
+        //        // Llamamos al método de negocio que actualiza las posiciones de la liga
+        //        await _organizerBusiness.UpdateLeagueStandings(tournamentId);
+
+        //        // Si llegamos aquí sin excepciones, significa que todo salió bien
+        //        response.Data = true; // Puedes indicar que la operación fue exitosa.
+        //    }
+        //    catch (ArgumentException ex)
+        //    {
+        //        response.Success = false;
+        //        response.Message = ex.Message;
+        //        return BadRequest(response);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        response.Success = false;
+        //        response.Message = "Ocurrió un error al actualizar las posiciones de la liga.";
+        //        return StatusCode(500, response);
+        //    }
+
+        //    return Ok(response);
+        //}
+
+        //getleaguestandings
+
+        [HttpGet("GetLeagueStandings")]
+        public async Task<IActionResult> GetLeagueStandings(int tournamentId)
+        {
+            var response = new APIResponse<List<LeagueStandingDTO>> { Success = true };
+
+            try
+            {
+                // Llamamos al método de negocio que obtiene las posiciones de la liga
+                response.Data = await _organizerBusiness.GetLeagueStandings(tournamentId);
+            }
+            catch (ArgumentException ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = "Ocurrió un error al obtener las posiciones de la liga.";
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
+
     }
 
 }

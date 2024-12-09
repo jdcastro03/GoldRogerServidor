@@ -193,7 +193,6 @@ namespace GoldRogerServer.Business
                 Draws = 0,
                 GoalsFor = 0,
                 GoalsAgainst = 0,
-                GoalDifference = 0,
                 Points = 0,
                 MatchesPlayed = 0
             };
@@ -266,6 +265,8 @@ namespace GoldRogerServer.Business
         }
 
 
+
+        //metoo el 
 
     }
 }

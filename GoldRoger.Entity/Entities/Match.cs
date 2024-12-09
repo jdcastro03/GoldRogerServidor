@@ -22,6 +22,9 @@ namespace GoldRoger.Entity.Entities
 
         public int? Stage { get; set; } // Etapa del torneo
 
+        public bool Active { get; set; } // Indica si el partido está activo
+
+        public bool? Evaluated { get; set; } // Indica si el partido ya fue evaluado
 
 
         // Navegación

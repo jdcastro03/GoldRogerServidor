@@ -43,8 +43,7 @@ namespace GoldRoger.Data.Maps
             builder.Property(ls => ls.GoalsAgainst)
                 .HasDefaultValue(0);
 
-            builder.Property(ls => ls.GoalDifference)
-                .HasComputedColumnSql("GoalsFor - GoalsAgainst");
+         
 
             // Relación con Team
             builder.HasOne(ls => ls.Team)

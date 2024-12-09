@@ -5,7 +5,13 @@ using GoldRogerServer.Business;
 using GoldRogerServer.Utils;
 using GoldRoger.Entity.Entities.GoldRoger.Entity.Entities;
 using GoldRogerServer.DTOs.Referee;
+using GoldRogerServer.Helpers;
+using System.Collections.Generic;
+
 using GoldRoger.Entity.Entities;
+using Microsoft.AspNetCore.Authorization;
+using System.Collections.Generic;
+
 namespace GoldRogerServer.Controllers
 
 {
@@ -135,5 +141,258 @@ namespace GoldRogerServer.Controllers
 
             return Ok(response);
         }
+
+
+        //getmatchbyrefereeid usa authorize oara obtener el id del referee logeado
+        [HttpGet("GetMatchesByRefereeId")]
+        [Authorize]
+        public async Task<IActionResult> GetMatchByRefereeId()
+        {
+            var response = new APIResponse<List<MatchRefereeDTO>> { Success = true };
+
+            try
+            {
+                // Obtenemos el id del referee logeado
+                int refereeId = SessionHelper.GetTokenUserId(User);
+                if (refereeId == 0)
+                    return Unauthorized(new { Success = false, Message = "Usuario no autorizado" });
+
+                // Llamamos al servicio de negocio para obtener los partidos del referee
+                response.Data = await _refereeBusiness.GetMatchesByRefereeId(refereeId);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+
+
+        //getmatchbymatchid
+
+        [HttpGet("GetMatchByMatchId")]
+        public async Task<IActionResult> GetMatchByMatchId(int matchId)
+        {
+            var response = new APIResponse<MatchRefereeDTO> { Success = true };
+
+            try
+            {
+                response.Data = await _refereeBusiness.GetMatchByMatchId(matchId);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+        
+        //getplayersbymatchid
+        [HttpGet("GetPlayersByMatchId")]
+        public async Task<IActionResult> GetPlayersByMatchId(int matchId)
+        {
+            var response = new APIResponse<List<MatchTeamDTO>> { Success = true };
+
+            try
+            {
+                response.Data = await _refereeBusiness.GetPlayers1ByMatchId(matchId);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+
+
+
+        //getplayers2bymatchid
+        [HttpGet("GetPlayers2ByMatchId")]
+        public async Task<IActionResult> GetPlayers2ByMatchId(int matchId)
+        {
+            var response = new APIResponse<List<MatchTeamDTO>> { Success = true };
+
+            try
+            {
+                response.Data = await _refereeBusiness.GetPlayers2ByMatchId(matchId);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+
+        //addgoal sin r
+        [HttpPost("AddGoal")]
+        public async Task<IActionResult> AddGoal(int playerId, int matchId)
+        {
+            var response = new APIResponse<bool> { Success = true };
+
+            try
+            {
+                // Llamamos al método de negocio para agregar un gol
+                await _refereeBusiness.AddGoal(playerId, matchId);
+                response.Message = "Gol añadido con éxito.";
+                response.Data = true;
+            }
+            catch (ArgumentException ex)
+            {
+                // Capturamos errores específicos de negocio
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                // Capturamos errores generales
+                response.Success = false;
+                response.Message = "Ocurrió un error inesperado.";
+                response.Data = false;
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
+
+        //ismatchactive
+        [HttpGet("IsMatchActive")]
+        public async Task<IActionResult> IsMatchActive(int matchId)
+        {
+            var response = new APIResponse<bool> { Success = true };
+
+            try
+            {
+                response.Data = await _refereeBusiness.IsMatchActive(matchId);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+
+
+        //getgoalsbymatchid
+        [HttpGet("GetGoalsByMatchId")]
+        public async Task<IActionResult> GetGoalsByMatchId(int matchId)
+        {
+            var response = new APIResponse<MatchGoalsDTO> { Success = true };
+
+            try
+            {
+                response.Data = await _refereeBusiness.GetGoalsByMatchId(matchId);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+
+        //startmatch
+        [HttpPost("StartMatch")]
+        public async Task<IActionResult> StartMatch(int matchId)
+        {
+            var response = new APIResponse<bool> { Success = true };
+
+            try
+            {
+                // Llamamos al método de negocio para iniciar el partido
+                await _refereeBusiness.StartMatch(matchId);
+                response.Message = "Partido iniciado con éxito.";
+                response.Data = true;
+            }
+            catch (ArgumentException ex)
+            {
+                // Capturamos errores específicos de negocio
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                // Capturamos errores generales
+                response.Success = false;
+                response.Message = "Ocurrió un error inesperado.";
+                response.Data = false;
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
+
+
+
+        //endmatch
+        [HttpPost("EndMatch")]
+        public async Task<IActionResult> EndMatch(int matchId)
+        {
+            var response = new APIResponse<bool> { Success = true };
+
+            try
+            {
+                // Llamamos al método de negocio para finalizar el partido
+                await _refereeBusiness.EndMatch(matchId);
+                response.Message = "Partido finalizado con éxito.";
+                response.Data = true;
+            }
+            catch (ArgumentException ex)
+            {
+                // Capturamos errores específicos de negocio
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                // Capturamos errores generales
+                response.Success = false;
+                response.Message = "Ocurrió un error inesperado.";
+                response.Data = false;
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
+
+
+        //Getactivematches
+        [HttpGet("GetActiveMatches")]
+        public async Task<IActionResult> GetActiveMatches()
+        {
+            var response = new APIResponse<List<MatchHomeDTO>> { Success = true };
+
+            try
+            {
+                response.Data = await _refereeBusiness.GetActiveMatches();
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+
     }
 }

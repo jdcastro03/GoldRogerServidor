@@ -556,6 +556,12 @@ namespace GoldRogerServer.Business
             var playerStats = new List<TournamentPlayerStatsDTO>();
             foreach (var team in teams)
             {
+                // Verificar que el equipo tenga un nombre
+                if (string.IsNullOrEmpty(team.TeamName))
+                {
+                    continue; // O manejar el caso de algún equipo sin nombre
+                }
+
                 var players = await uow.PlayerRepository
                     .Get(player => player.TeamId == team.TeamId) // Filtro por TeamId
                     .Include(player => player.User)
@@ -564,6 +570,12 @@ namespace GoldRogerServer.Business
 
                 foreach (var player in players)
                 {
+                    // Verificar que el jugador tenga un User y PlayerStats
+                    if (player.User == null || player.PlayerStats == null)
+                    {
+                        continue; // O manejar el caso de un jugador sin datos completos
+                    }
+
                     playerStats.Add(new TournamentPlayerStatsDTO
                     {
                         PlayerId = player.PlayerId,
@@ -579,6 +591,7 @@ namespace GoldRogerServer.Business
 
             return playerStats;
         }
+
 
 
         //metodo para donde obtendras todos los equipos del toirnamentid que se apsara como parametro y generara partidos doned cada equipo entre si solo se enfrentara una vez y se generaran los partidos con los equipos que se enfrentaran, cada cuando el team1id sea el mismo stage aumentara en 1, si hay uno nuevo empieza en 1
@@ -631,7 +644,8 @@ namespace GoldRogerServer.Business
                             Team2Goals = 0,
                             Date = null,
                             IsFinished = false,
-                            Stage = round + 1 // Jornada actual
+                            Stage = round + 1, // Jornada actual
+                            Evaluated = false
                         });
                     }
                 }
@@ -760,36 +774,97 @@ namespace GoldRogerServer.Business
 
 
 
+        //metodo el cual tomara un tournamentid de paranetro y buscara en la tabla match todos los matchid, que tengan en el campos isfinished1 y que en el campo evaluated sea 0 y verificara los goles de cada equipo de cada partio, en caso que el team1id haya ganado, en la tabla de leaguestanding aumentaras el matchplayed de cada uno ademas de ponerle sumarle 3 points al campo de points al ganador al perdedor naa en caso e empatar sumarle 1 a cada uno y aumentar lo goles a favor dependieno los que aya metido, y una vez actualizao eso, me actuazliaraas el campo ded evaluated de cada matchevaluado para que no se vuelva a evaluar
+
+        public async Task UpdateLeagueStandings(int tournamentId)
+        {
+            // Verificar si el torneo existe
+            var tournamentExists = await uow.TournamentRepository
+                .Get(t => t.TournamentId == tournamentId)
+                .AnyAsync();
+
+            if (!tournamentExists)
+                throw new ArgumentException("Torneo no encontrado");
+
+            // Obtener los partidos asociados al torneo
+            var matches = await uow.MatchRepository
+                .Get(m => m.TournamentId == tournamentId && m.IsFinished == true && m.Evaluated == false)
+                .ToListAsync();
+
+            // Actualizar las posiciones de la liga
+            foreach (var match in matches)
+            {
+                // Obtener los equipos del partido
+                var team1 = await uow.TeamRepository.Get(t => t.TeamId == match.Team1Id).FirstOrDefaultAsync();
+                var team2 = await uow.TeamRepository.Get(t => t.TeamId == match.Team2Id).FirstOrDefaultAsync();
+
+                // Obtener las posiciones de la liga de los equipos
+                var team1Standing = await uow.LeagueStandingRepository
+                    .Get(ls => ls.TeamId == team1.TeamId && ls.TournamentId == tournamentId)
+                    .FirstOrDefaultAsync();
+
+                var team2Standing = await uow.LeagueStandingRepository
+                    .Get(ls => ls.TeamId == team2.TeamId && ls.TournamentId == tournamentId)
+                    .FirstOrDefaultAsync();
+
+                // Actualizar las posiciones de la liga
+                if (match.Team1Goals > match.Team2Goals)
+                {
+                    team1Standing.Points += 3;
+                    team1Standing.MatchesPlayed++;
+                    team1Standing.GoalsFor += match.Team1Goals;
+                    team1Standing.GoalsAgainst += match.Team2Goals;
+                    team1Standing.Wins++;
+
+                    team2Standing.Losses++;
+                    team2Standing.MatchesPlayed++;
+                    team2Standing.GoalsFor += match.Team2Goals;
+                    team2Standing.GoalsAgainst += match.Team1Goals;
+                }
+                else if (match.Team1Goals < match.Team2Goals)
+                {
+                    team2Standing.Points += 3;
+                    team2Standing.MatchesPlayed++;
+                    team2Standing.GoalsFor += match.Team2Goals;
+                    team2Standing.GoalsAgainst += match.Team1Goals;
+                    team2Standing.Wins++;
+                    
+                    team1Standing.Losses++;
+                    team1Standing.MatchesPlayed++;
+                    team1Standing.GoalsFor += match.Team1Goals;
+                    team1Standing.GoalsAgainst += match.Team2Goals;
+                    }
+                else
+                    {
+                    team1Standing.Points += 1;
+                    team1Standing.MatchesPlayed++;
+                    team1Standing.GoalsFor += match.Team1Goals;
+                    team1Standing.GoalsAgainst += match.Team2Goals;
+                    team1Standing.Draws++;
+
+                    team2Standing.Draws++;
+                    team2Standing.Points += 1;
+                    team2Standing.MatchesPlayed++;
+                    team2Standing.GoalsFor += match.Team2Goals;
+                    team2Standing.GoalsAgainst += match.Team1Goals;
+                }
+
+                // Actualizar las posiciones de la liga en la base de datos
+                uow.LeagueStandingRepository.Update(team1Standing);
+                uow.LeagueStandingRepository.Update(team2Standing);
+
+                // Marcar el partido como evaluado
+                match.Evaluated = true;
+                uow.MatchRepository.Update(match);
+                }
+
+            await uow.SaveAsync();
+            }
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        //public async Task<List<PlayerStatsDTO>> GetPlayerStatsByTournamentId(int tournamentId)
+        //public async Task UpdateLeagueStandings(int tournamentId)
         //{
         //    // Verificar si el torneo existe
         //    var tournamentExists = await uow.TournamentRepository
@@ -799,43 +874,189 @@ namespace GoldRogerServer.Business
         //    if (!tournamentExists)
         //        throw new ArgumentException("Torneo no encontrado");
 
-        //    // Obtener los equipos asociados al torneo
-        //    var teams = await uow.TeamRepository
-        //        .Get(team => team.TournamentId == tournamentId) // Filtro por TournamentId
+        //    // Obtener los partidos asociados al torneo
+        //    var matches = await uow.MatchRepository
+        //        .Get(m => m.TournamentId == tournamentId)
         //        .ToListAsync();
 
-        //    // Obtener las estadísticas de los jugadores de los equipos
-        //    var playerStats = new List<PlayerStatsDTO>();
-        //    foreach (var team in teams)
+        //    // Actualizar las posiciones de la liga
+        //    foreach (var match in matches)
         //    {
-        //        var players = await uow.PlayerRepository
-        //            .Get(player => player.TeamId == team.TeamId) // Filtro por TeamId
-        //            .Include(player => player.User)
-        //            .Include(player => player.PlayerStats)
-        //            .ToListAsync();
-
-        //        foreach (var player in players)
+        //        if (match.IsFinished ?? false)
         //        {
-        //            playerStats.Add(new PlayerStatsDTO
+        //            // Obtener los equipos del partido
+        //            var team1 = await uow.TeamRepository.Get(t => t.TeamId == match.Team1Id).FirstOrDefaultAsync();
+        //            var team2 = await uow.TeamRepository.Get(t => t.TeamId == match.Team2Id).FirstOrDefaultAsync();
+
+        //            // Obtener las posiciones de la liga de los equipos
+        //            var team1Standing = await uow.LeagueStandingRepository
+        //                .Get(ls => ls.TeamId == team1.TeamId && ls.TournamentId == tournamentId)
+        //                .FirstOrDefaultAsync();
+
+        //            var team2Standing = await uow.LeagueStandingRepository
+        //                .Get(ls => ls.TeamId == team2.TeamId && ls.TournamentId == tournamentId)
+        //                .FirstOrDefaultAsync();
+
+        //            // Actualizar las posiciones de la liga
+        //            if (match.Team1Goals > match.Team2Goals)
         //            {
-        //                PlayerId = player.PlayerId,
-        //                FirstName = player.User.FirstName,
-        //                LastName = player.User.LastName,
-        //                Goals = player.PlayerStats.Goals,
-        //                YellowCards = player.PlayerStats.YellowCards,
-        //                RedCards = player.PlayerStats.RedCards
-        //            });
+        //                team1Standing.Points += 3;
+        //                team1Standing.MatchesPlayed++;
+        //                team1Standing.GoalsFor += match.Team1Goals;
+        //                team1Standing.GoalsAgainst += match.Team2Goals;
+
+        //                team2Standing.MatchesPlayed++;
+        //                team2Standing.GoalsFor += match.Team2Goals;
+        //                team2Standing.GoalsAgainst += match.Team1Goals;
+        //            }
+        //            else if (match.Team1Goals < match.Team2Goals)
+        //            {
+        //                team2Standing.Points += 3;
+        //                team2Standing.MatchesPlayed++;
+        //                team2Standing.GoalsFor += match.Team2Goals;
+        //                team2Standing.GoalsAgainst += match.Team1Goals;
+
+        //                team1Standing.MatchesPlayed++;
+        //                team1Standing.GoalsFor += match.Team1Goals;
+        //                team1Standing.GoalsAgainst += match.Team2Goals;
+        //            }
+        //            else
+        //            {
+        //                team1Standing.Points += 1;
+        //                team1Standing.MatchesPlayed++;
+        //                team1Standing.GoalsFor += match.Team1Goals;
+        //                team1Standing.GoalsAgainst += match.Team2Goals;
+
+        //                team2Standing.Points += 1;
+        //                team2Standing.MatchesPlayed++;
+        //                team2Standing.GoalsFor += match.Team2Goals;
+        //                team2Standing.GoalsAgainst += match.Team1Goals;
+        //            }
+
+        //            // Actualizar las posiciones de la liga en la base de datos
+        //            uow.LeagueStandingRepository.Update(team1Standing);
+        //            uow.LeagueStandingRepository.Update(team2Standing);
+
+        //            }
         //        }
+
+        //    await uow.SaveAsync();
+
         //    }
 
-        //    return playerStats;
-        //}
+
+        //metoddo que recibira el tournamentidd y obtendra lo de leaguestandingdto, el teamname lo obtendras de la tabla team con el teamid
+        public async Task<List<LeagueStandingDTO>> GetLeagueStandings(int tournamentId)
+
+            {
+            // Verificar si el torneo existe
+            var tournamentExists = await uow.TournamentRepository
+                .Get(t => t.TournamentId == tournamentId)
+                .AnyAsync();
+
+            if (!tournamentExists)
+                throw new ArgumentException("Torneo no encontrado");
+
+            // Obtener las posiciones de la liga asociadas al torneo
+            var standings = await uow.LeagueStandingRepository
+                .Get(ls => ls.TournamentId == tournamentId)
+                .Include(ls => ls.Team)
+                .Select(ls => new LeagueStandingDTO
+                {
+                    TeamName = ls.Team.TeamName,
+                    MatchesPlayed = ls.MatchesPlayed,
+                    Wins = ls.Wins,
+                    Draws = ls.Draws,
+                    Losses = ls.Losses,
+                    GoalsFor = ls.GoalsFor,
+                    GoalsAgainst = ls.GoalsAgainst,
+                    Points = ls.Points
+                    })
+                .ToListAsync();
+            return standings;
+            }
+
+       
+
+          
 
 
 
 
 
 
-    }
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    //public async Task<List<PlayerStatsDTO>> GetPlayerStatsByTournamentId(int tournamentId)
+                    //{
+                    //    // Verificar si el torneo existe
+                    //    var tournamentExists = await uow.TournamentRepository
+                    //        .Get(t => t.TournamentId == tournamentId)
+                    //        .AnyAsync();
+
+                    //    if (!tournamentExists)
+                    //        throw new ArgumentException("Torneo no encontrado");
+
+                    //    // Obtener los equipos asociados al torneo
+                    //    var teams = await uow.TeamRepository
+                    //        .Get(team => team.TournamentId == tournamentId) // Filtro por TournamentId
+                    //        .ToListAsync();
+
+                    //    // Obtener las estadísticas de los jugadores de los equipos
+                    //    var playerStats = new List<PlayerStatsDTO>();
+                    //    foreach (var team in teams)
+                    //    {
+                    //        var players = await uow.PlayerRepository
+                    //            .Get(player => player.TeamId == team.TeamId) // Filtro por TeamId
+                    //            .Include(player => player.User)
+                    //            .Include(player => player.PlayerStats)
+                    //            .ToListAsync();
+
+                    //        foreach (var player in players)
+                    //        {
+                    //            playerStats.Add(new PlayerStatsDTO
+                    //            {
+                    //                PlayerId = player.PlayerId,
+                    //                FirstName = player.User.FirstName,
+                    //                LastName = player.User.LastName,
+                    //                Goals = player.PlayerStats.Goals,
+                    //                YellowCards = player.PlayerStats.YellowCards,
+                    //                RedCards = player.PlayerStats.RedCards
+                    //            });
+                    //        }
+                    //    }
+
+                    //    return playerStats;
+                    //}
+
+
+
+
+
+
+                }
+            }
+        
 
