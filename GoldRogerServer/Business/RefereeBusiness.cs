@@ -417,6 +417,69 @@ namespace GoldRogerServer.Business
             await uow.SaveAsync();
         }
 
+        //metodo para addyellow card, el cual recibira un playerid y matchid, y aumentara en 1 el campo de yellowcards en la tabla playerstats solamente
+
+        public async Task AddYellowCard(int playerId, int matchId)
+        {
+            // Busca el jugador en la base de datos usando el PlayerId
+            var player = await uow.PlayerRepository.Get(p => p.PlayerId == playerId).FirstOrDefaultAsync();
+
+            // Si no se encuentra el jugador, lanza una excepción
+            if (player == null)
+                throw new ArgumentException("Jugador no encontrado");
+
+            // Busca el registro de estadísticas del jugador en la base de datos usando el PlayerId
+            var playerStats = await uow.PlayerStatsRepository.Get(ps => ps.PlayerId == playerId).FirstOrDefaultAsync();
+
+            // Si no se encuentra el registro de estadísticas del jugador, lanza una excepción
+            if (playerStats == null)
+                throw new ArgumentException("Estadísticas del jugador no encontradas");
+
+            // Aumenta en 1 el número de tarjetas amarillas del jugador
+            playerStats.YellowCards++;
+
+            // Asegúrate de que la entidad esté siendo rastreada correctamente
+            uow.dbcontext.Entry(playerStats).State = EntityState.Modified;
+
+            // Actualiza el registro de estadísticas del jugador en la base de datos
+            uow.PlayerStatsRepository.Update(playerStats);
+
+            // Guarda los cambios
+            await uow.SaveAsync();
+        }
+
+
+        //addredcard, el cual recibira un playerid y matchid, y aumentara en 1 el campo de redcards en la tabla playerstats solamente
+
+        public async Task AddRedCard(int playerId, int matchId)
+        {
+            // Busca el jugador en la base de datos usando el PlayerId
+            var player = await uow.PlayerRepository.Get(p => p.PlayerId == playerId).FirstOrDefaultAsync();
+
+            // Si no se encuentra el jugador, lanza una excepción
+            if (player == null)
+                throw new ArgumentException("Jugador no encontrado");
+
+            // Busca el registro de estadísticas del jugador en la base de datos usando el PlayerId
+            var playerStats = await uow.PlayerStatsRepository.Get(ps => ps.PlayerId == playerId).FirstOrDefaultAsync();
+
+            // Si no se encuentra el registro de estadísticas del jugador, lanza una excepción
+            if (playerStats == null)
+                throw new ArgumentException("Estadísticas del jugador no encontradas");
+
+            // Aumenta en 1 el número de tarjetas rojas del jugador
+            playerStats.RedCards++;
+
+            // Asegúrate de que la entidad esté siendo rastreada correctamente
+            uow.dbcontext.Entry(playerStats).State = EntityState.Modified;
+
+            // Actualiza el registro de estadísticas del jugador en la base de datos
+            uow.PlayerStatsRepository.Update(playerStats);
+
+            // Guarda los cambios
+            await uow.SaveAsync();
+        }
+
 
         //metodo que de parametro le an un matchid y obtendra el team1goals y team2goals del partido solamente
 

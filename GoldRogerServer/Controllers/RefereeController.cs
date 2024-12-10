@@ -394,5 +394,70 @@ namespace GoldRogerServer.Controllers
             return Ok(response);
         }
 
+        //addyellowcard
+        [HttpPost("AddYellowCard")]
+        public async Task<IActionResult> AddYellowCard(int playerId, int matchId)
+        {
+            var response = new APIResponse<bool> { Success = true };
+
+            try
+            {
+                // Llamamos al método de negocio para agregar una tarjeta amarilla
+                await _refereeBusiness.AddYellowCard(playerId, matchId);
+                response.Message = "Tarjeta amarilla añadida con éxito.";
+                response.Data = true;
+            }
+            catch (ArgumentException ex)
+            {
+                // Capturamos errores específicos de negocio
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                // Capturamos errores generales
+                response.Success = false;
+                response.Message = "Ocurrió un error inesperado.";
+                response.Data = false;
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
+
+
+        //addredcard
+        [HttpPost("AddRedCard")]
+        public async Task<IActionResult> AddRedCard(int playerId, int matchId)
+        {
+            var response = new APIResponse<bool> { Success = true };
+
+            try
+            {
+                // Llamamos al método de negocio para agregar una tarjeta roja
+                await _refereeBusiness.AddRedCard(playerId, matchId);
+                response.Message = "Tarjeta roja añadida con éxito.";
+                response.Data = true;
+            }
+            catch (ArgumentException ex)
+            {
+                // Capturamos errores específicos de negocio
+                response.Success = false;
+                response.Message = ex.Message;
+                return BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                // Capturamos errores generales
+                response.Success = false;
+                response.Message = "Ocurrió un error inesperado.";
+                response.Data = false;
+                return StatusCode(500, response);
+            }
+
+            return Ok(response);
+        }
+
     }
 }
