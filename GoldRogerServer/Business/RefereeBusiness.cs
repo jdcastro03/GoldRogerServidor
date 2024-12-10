@@ -580,7 +580,7 @@ namespace GoldRogerServer.Business
         }
 
 
-        //metodo que devolvera todos los campos de de matchhomeDTO obtendra todos los match que en el campo active sea 1 o true, y de cada match obtendra los team1id y team2id, y con esos ids obtendra el teamname de la tabla team, usa apiresponse y matchhomedto
+        //metodo que devolvera todos los campos de de matchhomeDTO obtendra todos los match que en el campo active sea 1 o true, y de cada match obtendra los team1id y team2id, y con esos ids obtendra el teamname de la tabla team, usa apiresponse y matchhomedto ademas de obtener el tournamentname de torneo al que pertenece el match utizliando el tournamentid de la tabla match
 
         public async Task<List<MatchHomeDTO>> GetActiveMatches()
         {
@@ -600,6 +600,9 @@ namespace GoldRogerServer.Business
                 // Verifica si los equipos fueron encontrados
                 if (team1 != null && team2 != null)
                 {
+                    // Busca el torneo correspondiente
+                    var tournament = await uow.TournamentRepository.Get(t => t.TournamentId == match.TournamentId).FirstOrDefaultAsync();
+
                     // Mapea la información a MatchHomeDTO
                     var matchHomeDTO = new MatchHomeDTO
                     {
@@ -608,17 +611,56 @@ namespace GoldRogerServer.Business
                         Team2Name = team2.TeamName,
                         Team1Goals = match.Team1Goals,
                         Team2Goals = match.Team2Goals,
+                        TournamentName = tournament.TournamentName
                     };
 
                     // Agrega el DTO a la lista
                     matchHomeDTOs.Add(matchHomeDTO);
-                    
                 }
             }
 
             // Devuelve la lista de DTOs
             return matchHomeDTOs;
         }
+
+        //public async Task<List<MatchHomeDTO>> GetActiveMatches()
+        //{
+        //    // Busca todos los partidos activos en la base de datos
+        //    var matches = await uow.MatchRepository.Get(m => m.Active == true).ToListAsync();
+
+        //    // Crea una lista de DTOs de partidos
+        //    var matchHomeDTOs = new List<MatchHomeDTO>();
+
+        //    // Por cada partido en la lista de partidos
+        //    foreach (var match in matches)
+        //    {
+        //        // Busca los equipos correspondientes
+        //        var team1 = await uow.TeamRepository.Get(t => t.TeamId == match.Team1Id).FirstOrDefaultAsync();
+        //        var team2 = await uow.TeamRepository.Get(t => t.TeamId == match.Team2Id).FirstOrDefaultAsync();
+
+        //        // Verifica si los equipos fueron encontrados
+        //        if (team1 != null && team2 != null)
+        //        {
+        //            // Mapea la información a MatchHomeDTO
+        //            var matchHomeDTO = new MatchHomeDTO
+        //            {
+        //                MatchId = match.MatchId,
+        //                Team1Name = team1.TeamName,
+        //                Team2Name = team2.TeamName,
+        //                Team1Goals = match.Team1Goals,
+        //                Team2Goals = match.Team2Goals,
+
+        //            };
+
+        //            // Agrega el DTO a la lista
+        //            matchHomeDTOs.Add(matchHomeDTO);
+                    
+        //        }
+        //    }
+
+        //    // Devuelve la lista de DTOs
+        //    return matchHomeDTOs;
+        //}
 
         //public async Task<APIResponse<List<MatchHomeDTO>>> GetActiveMatches()
         //{
