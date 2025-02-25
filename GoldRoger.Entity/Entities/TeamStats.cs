@@ -12,7 +12,10 @@ namespace GoldRoger.Entity.Entities
         public int GoalsFor { get; set; }
         public int GoalsAgainst { get; set; }
 
-        // Relaciones
-        public Team Team { get; set; }
+        //// Relaciones
+        //public Team Team { get; set; }
+        //public List<Match> Matches { get; set; }
+
+        //Hola
     }
 }

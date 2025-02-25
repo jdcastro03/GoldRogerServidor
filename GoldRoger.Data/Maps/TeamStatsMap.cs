@@ -19,9 +19,7 @@ namespace GoldRoger.Data.Maps
             builder.Property(ts => ts.GoalsFor).HasDefaultValue(0);
             builder.Property(ts => ts.GoalsAgainst).HasDefaultValue(0);
 
-            builder.HasOne(ts => ts.Team)
-                   .WithOne()
-                   .HasForeignKey<TeamStats>(ts => ts.TeamId);
+           
         }
     }
 }
