@@ -189,7 +189,8 @@ namespace GoldRogerServer.Business
                     Team2Goals = 0,
                     Date = null,
                     IsFinished = false,
-                    Stage = 4
+                    Stage = 4,
+                    Evaluated = false
                 };
 
                 matches.Add(match);
@@ -293,7 +294,8 @@ namespace GoldRogerServer.Business
                     Team2Goals = 0,
                     Date = null,
                     IsFinished = false,
-                    Stage = 2
+                    Stage = 2,
+                    Evaluated = false
                 };
 
                 matches.Add(match);
@@ -391,7 +393,8 @@ namespace GoldRogerServer.Business
                 Team2Goals = 0,
                 Date = null,
                 IsFinished = false,
-                Stage = 1
+                Stage = 1,
+                Evaluated = false
             };
 
             // Insertar el partido final en la base de datos

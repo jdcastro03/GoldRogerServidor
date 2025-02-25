@@ -7,7 +7,8 @@ using Microsoft.Extensions.Hosting;
 using GoldRogerServer.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
-
+// Configuración del host para definir la URL
+builder.WebHost.UseUrls("http://*:5024"); // Agregar esta línea aquí
 
 ServiceConfigurator.ConfigureDBOptions(builder);
 ServiceConfigurator.ConfigureRepositories(builder);
@@ -32,7 +33,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.WithOrigins("http://localhost:4200") // Agrega el origen del frontend
+        policy.WithOrigins("https://goldrogerclient-d9ceffhahcffbnaw.canadacentral-01.azurewebsites.net") // Agrega el origen del frontend
               .AllowAnyHeader()
               .AllowAnyMethod() // Esto permite métodos como PUT
               .AllowCredentials(); // Si utilizas autenticación

@@ -17,7 +17,7 @@ namespace GoldRogerServer
     {
         public static void ConfigureDBOptions(WebApplicationBuilder builder)
         {
-            builder.Services.AddDbContext<GoldRogerContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("GoldRogerServer")));
+            builder.Services.AddDbContext<GoldRogerContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("GoldRogerServerTest")));
 
         }
         public static void ConfigureRepositories(WebApplicationBuilder builder)

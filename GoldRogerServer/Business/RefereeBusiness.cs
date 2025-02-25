@@ -703,6 +703,43 @@ namespace GoldRogerServer.Business
 
 
 
+        //metodo para obtener nombre de arbitros
+
+        public async Task<List<RefereeDTO>> GetAllRefereess() 
+        {
+            // Busca todos los árbitros en la base de datos, incluyendo la relación con 'User'
+            var referees = await uow.RefereeRepository
+                .Get()
+                .Include(r => r.User) // Asegura que se cargue la relación 'User'
+                .ToListAsync();
+
+            // Crea una lista de DTOs de árbitros
+            var refereeDTOs = new List<RefereeDTO>();
+
+            // Por cada árbitro en la lista de árbitros
+            foreach (var referee in referees)
+            {
+                // Verificar si referee.User no es null
+                if (referee.User != null)
+                {
+                    // Crea un DTO de árbitro
+                    var refereeDTO = new RefereeDTO
+                    {
+                        RefereeId = referee.RefereeId,
+                        FirstName = referee.User.FirstName,
+                        LastName = referee.User.LastName
+                    };
+
+                    // Agrega el DTO de árbitro a la lista de DTOs de árbitros
+                    refereeDTOs.Add(refereeDTO);
+                }
+            }
+
+            // Devuelve la lista de DTOs de árbitros
+            return refereeDTOs;
+        }
+
+
 
 
 
