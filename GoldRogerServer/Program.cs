@@ -33,7 +33,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.WithOrigins("https://goldrogerclient-d9ceffhahcffbnaw.canadacentral-01.azurewebsites.net") // Agrega el origen del frontend
+        policy.WithOrigins("http://44.201.159.252") // Agrega el origen del frontend
               .AllowAnyHeader()
               .AllowAnyMethod() // Esto permite métodos como PUT
               .AllowCredentials(); // Si utilizas autenticación
@@ -54,7 +54,7 @@ app.UseSwagger();
 app.UseSwaggerUI();
 //}
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseCors("AllowAll");

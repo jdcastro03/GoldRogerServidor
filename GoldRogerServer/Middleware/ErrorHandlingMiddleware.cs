@@ -34,16 +34,13 @@ namespace GoldRogerServer.Middleware
         private static async Task HandleException(HttpContext context, Exception exception)
         {
             context.Response.ContentType = "application/json";
-
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
 
-            // TODO: Change for a specific exception for validations
-            if (!string.IsNullOrEmpty(exception.Message) && !string.IsNullOrWhiteSpace(exception.Message) && exception.Message.Contains("MSG"))
-            {
-                context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            }
+            // Agregar esta línea para ver el error completo incluyendo InnerException
+            var fullErrorMessage = $"{exception.Message}\n{exception.StackTrace}\nInner: {exception.InnerException?.Message}";
 
-            await WriteObject(APIResponse<bool>.Fail(exception.Message), context);
+            // Usar el mensaje completo en lugar del simple
+            await WriteObject(APIResponse<bool>.Fail(fullErrorMessage), context);
         }
 
         private static async Task WriteObject(object obj, HttpContext context) => await context.Response.WriteAsync(JsonSerializer.Serialize(obj));
